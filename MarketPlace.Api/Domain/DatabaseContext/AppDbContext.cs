@@ -1,0 +1,14 @@
+﻿using MarketPlace.Api.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+
+namespace MarketPlace.Api.Domain.DatabaseContext;
+
+public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+{
+    public DbSet<User> Users => Set<User>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+    }
+}
