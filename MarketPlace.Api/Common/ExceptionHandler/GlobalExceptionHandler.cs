@@ -6,7 +6,7 @@ public sealed class GlobalExceptionHandler(IWebHostEnvironment env, ILogger<Glob
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
-        var (statuscode, detail) = Mapexceptions(exception, env);
+        (int statuscode, string? detail) = Mapexceptions(exception, env);
 
         logger.LogError(exception, "Exception was thrown and handled with message {message}", exception.Message);
 

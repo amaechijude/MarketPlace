@@ -1,7 +1,7 @@
-using System.Security.Cryptography;
-using System.Text;
 using MarketPlace.Api.Common.Extensions;
 using Microsoft.Extensions.Caching.Hybrid;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace MarketPlace.Api.Infrastucture.Auth;
 
@@ -13,7 +13,7 @@ public sealed class AuthSessionstore(HybridCache hybridCache) : ISingletonMarker
         CancellationToken cancellationToken
     )
     {
-        var token = GenerateToken();
+        string token = GenerateToken();
 
         await hybridCache.SetAsync(
             key: HashKey(token),

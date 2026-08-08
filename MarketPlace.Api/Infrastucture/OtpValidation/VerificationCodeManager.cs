@@ -1,62 +1,64 @@
+using MarketPlace.Api.Common.Extensions;
+using Microsoft.Extensions.Caching.Hybrid;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Channels;
-using GitgBrand.Api.Infrastructure.OtpValidation;
-using MarketPlace.Api.Infrastucture.Email;
-using Microsoft.Extensions.Caching.Hybrid;
 
 namespace MarketPlace.Api.Infrastucture.OtpValidation;
 
-public sealed class VerificationCodeHandler(
+public sealed class VerificationCodeManager(
     HybridCache hybridCache,
     TimeProvider timeProvider,
     Channel<OtpEmailRequest> emailChannel
-)
+) : ISingletonMarker
 {
-    public async ValueTask GenerateAndDispatchOtp(
+    public async ValueTask<Guid> GenerateAndDispatchOtp(
         Guid userId,
         string email,
         OtpType type,
-        string name,
         CancellationToken cancellationToken
     )
     {
-        var maxLifeTime = TimeSpan.FromMinutes(10);
+        TimeSpan maxLifeTime = TimeSpan.FromMinutes(10);
 
-        var rawCode = RandomNumberGenerator.GetInt32(1_000_000).ToString("D6");
+        string rawCode = RandomNumberGenerator.GetInt32(1_000_000).ToString("D6");
 
-        var value = new OtpVerificationCode(
+        OtpVerificationCode value = new(
             userId,
+            HashOtp(rawCode),
             type,
             timeProvider.GetUtcNow().Add(maxLifeTime)
         );
 
+        Guid key = Guid.NewGuid();
+
         await hybridCache.SetAsync(
-            key: HashOtp(rawCode),
+            key: key.ToString(),
             value: value,
             options: new HybridCacheEntryOptions
             {
                 Expiration = maxLifeTime,
-                LocalCacheExpiration = maxLifeTime / 2,
+                LocalCacheExpiration = maxLifeTime,
             },
             cancellationToken: cancellationToken
         );
 
-        var emailRequest = CreatOtpEmailRequest(email, rawCode, type, name);
+        OtpEmailRequest emailRequest = new(email, type, rawCode);
 
         await emailChannel.Writer.WriteAsync(emailRequest, cancellationToken);
+
+        return key;
     }
 
     public async Task<OtpValidationResult> ValidateOtp(
         string userInput,
+        Guid otpKey,
         OtpType type,
         CancellationToken cancellationToken
     )
     {
-        var key = HashOtp(userInput);
-
-        var otp = await hybridCache.GetOrCreateAsync<OtpVerificationCode?>(
-            key: key,
+        OtpVerificationCode? otp = await hybridCache.GetOrCreateAsync(
+            key: otpKey.ToString(),
             factory: _ => ValueTask.FromResult<OtpVerificationCode?>(null),
             cancellationToken: cancellationToken
         );
@@ -64,9 +66,9 @@ public sealed class VerificationCodeHandler(
         if (otp is null)
             return OtpValidationResult.Failed();
 
-        var isValid = otp.Type == type && otp.ExpiresOn > timeProvider.GetUtcNow();
+        bool isValid = IsValid(userInput, otp, type, timeProvider.GetUtcNow());
 
-        await hybridCache.RemoveAsync(key, cancellationToken);
+        await hybridCache.RemoveAsync(otpKey.ToString(), cancellationToken);
 
         return isValid ? OtpValidationResult.Success(otp.UserId) : OtpValidationResult.Failed();
     }
@@ -78,25 +80,16 @@ public sealed class VerificationCodeHandler(
         return Convert.ToHexString(hash);
     }
 
-    private static OtpEmailRequest CreatOtpEmailRequest(
-        string email,
-        string plainOtp,
+    private static bool IsValid(
+        string input,
+        OtpVerificationCode otp,
         OtpType type,
-        string name
-    )
-    {
-        var subject = type switch
-        {
-            OtpType.Register => "Registration Verification",
-            OtpType.ResetPassword => "Password Reset",
-            _ => "Unknown",
-        };
-        return new OtpEmailRequest(
-            UserEmail: email,
-            PlainOtp: plainOtp,
-            Name: name,
-            Subject: subject,
-            Type: type
+        DateTimeOffset utc
+    ) =>
+        otp.Type == type
+        && utc > otp.ExpiresOn
+        && CryptographicOperations.FixedTimeEquals(
+            Encoding.UTF8.GetBytes(HashOtp(input)),
+            Encoding.UTF8.GetBytes(otp.HashValue)
         );
-    }
 }

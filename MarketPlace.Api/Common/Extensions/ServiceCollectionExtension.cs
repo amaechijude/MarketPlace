@@ -1,34 +1,22 @@
-﻿using Microsoft.Extensions.DependencyInjection.Extensions;
-using System.Reflection;
+﻿using System.Reflection;
 
 namespace MarketPlace.Api.Common.Extensions;
 
 public static class ServiceCollectionExtension
 {
-
-    public static IServiceCollection AddRequestEndpoints(this IServiceCollection services, Assembly assembly)
+    public static IServiceCollection AddScopedRequestHandlers(
+        this IServiceCollection services,
+        Assembly assembly
+    )
     {
-        var endpoints = assembly
-            .DefinedTypes.Where(t => t.IsAssignableTo(typeof(IRequestEndpoints)) && t is { IsAbstract: false, IsInterface: false, IsClass: true })
-            .Select(s => ServiceDescriptor.Transient(typeof(IRequestEndpoints), s));
+        List<Type> handlerClasses = GetHandlers(assembly, typeof(IRequestHandler));
 
+        if (handlerClasses.Count == 0)
+        {
+            return services;
+        }
 
-        services.TryAddEnumerable(endpoints);
-        return services;
-    }
-    public static IServiceCollection AddRequestHandlers(
-       this IServiceCollection services,
-       Assembly assembly
-   )
-    {
-        var handlerClasses = assembly
-            .GetTypes()
-            .Where(t =>
-                typeof(IRequestHandler).IsAssignableFrom(t)
-                && t is { IsInterface: false, IsAbstract: false, IsClass: true }
-            );
-
-        foreach (var handler in handlerClasses)
+        foreach (Type handler in handlerClasses)
         {
             services.AddScoped(handler);
         }
@@ -36,19 +24,39 @@ public static class ServiceCollectionExtension
         return services;
     }
 
-    public static IServiceCollection AddSingletonHandlers(
-    this IServiceCollection services,
-    Assembly assembly
-)
+    public static IServiceCollection AddTransientHandlers(
+        this IServiceCollection services,
+        Assembly assembly
+    )
     {
-        var handlerClasses = assembly
-            .GetTypes()
-            .Where(t =>
-                typeof(ISingletonMarker).IsAssignableFrom(t)
-                && t is { IsInterface: false, IsAbstract: false, IsClass: true }
-            );
+        List<Type> handlerClasses = GetHandlers(assembly, typeof(ITransientMarker));
 
-        foreach (var handler in handlerClasses)
+        if (handlerClasses.Count == 0)
+        {
+            return services;
+        }
+
+        foreach (Type handler in handlerClasses)
+        {
+            services.AddTransient(handler);
+        }
+
+        return services;
+    }
+
+    public static IServiceCollection AddSingletonHandlers(
+        this IServiceCollection services,
+        Assembly assembly
+    )
+    {
+        List<Type> handlerClasses = GetHandlers(assembly, typeof(ISingletonMarker));
+
+        if (handlerClasses.Count == 0)
+        {
+            return services;
+        }
+
+        foreach (Type handler in handlerClasses)
         {
             services.AddSingleton(handler);
         }
@@ -56,24 +64,19 @@ public static class ServiceCollectionExtension
         return services;
     }
 
-
-    public static void MapRequestEndpoints(this WebApplication app, RouteGroupBuilder? routeGroup = null)
-    {
-        IEndpointRouteBuilder builder = routeGroup is null ? app : routeGroup;
-
-        var endpoints = app.Services.GetRequiredService<IEnumerable<IRequestEndpoints>>().Reverse();
-
-        foreach (var endpoint in endpoints)
-        {
-            endpoint.Map(builder);
-        }
-
-    }
+    private static List<Type> GetHandlers(Assembly assembly, Type type) =>
+        [
+            .. assembly
+                .GetTypes()
+                .Where(t =>
+                    type.IsAssignableFrom(t)
+                    && t is { IsInterface: false, IsAbstract: false, IsClass: true }
+                ),
+        ];
 }
+
 public interface IRequestHandler;
-public interface IRequestEndpoints
-{
-    void Map(IEndpointRouteBuilder builder);
-}
+
+public interface ITransientMarker;
 
 public interface ISingletonMarker;

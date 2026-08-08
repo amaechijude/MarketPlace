@@ -11,9 +11,7 @@ public sealed class VerificationCodeBackgroundDispatcher(
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await foreach (
-            var email in emaiChannel.Reader.ReadAllAsync(cancellationToken: stoppingToken)
-        )
+        await foreach (var email in emaiChannel.Reader.ReadAllAsync(stoppingToken))
         {
             try
             {
@@ -22,6 +20,7 @@ public sealed class VerificationCodeBackgroundDispatcher(
             catch (Exception e)
             {
                 logger.LogError(
+                    e,
                     "Exception occurred while sending mail to {mail}. on {error}",
                     email.UserEmail,
                     e.Message
@@ -35,14 +34,19 @@ public sealed class VerificationCodeBackgroundDispatcher(
         await using var scope = serviceProvider.CreateAsyncScope();
         var emailSender = scope.ServiceProvider.GetRequiredService<EmailSender>();
 
-        var htmlBody = EmailTemplates.BuildOtpTemplate(request.Name, request.PlainOtp);
+        var htmlBody = EmailTemplates.BuildOtpTemplate("Dear", request.PlainOtp);
 
         await emailSender.SendEmailAsync(
-            [request.UserEmail],
-            request.Name,
-            request.Subject,
-            htmlBody,
+            new EmailMetaData(request.UserEmail, GetSubject(request.Type), htmlBody),
             cancellationToken
         );
     }
+
+    private static string GetSubject(OtpType type) =>
+        type switch
+        {
+            OtpType.Register => "Registration",
+            OtpType.ResetPassword => "Password Reset",
+            _ => "Hello",
+        };
 }

@@ -1,6 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
-using MarketPlace.Api.Domain.DatabaseContext;
+﻿using MarketPlace.Api.Domain.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
 
 namespace MarketPlace.Api.Infrastucture.Database;
 

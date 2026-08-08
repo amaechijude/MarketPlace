@@ -6,6 +6,10 @@
   <ItemGroup>
 	  <PackageReference Include="AWSSDK.S3" />
 	  <PackageReference Include="DotNetEnv" />
+	  <PackageReference Include="FluentEmail.Core" />
+	  <PackageReference Include="FluentEmail.Liquid" />
+	  <PackageReference Include="FluentEmail.Razor" />
+	  <PackageReference Include="FluentEmail.Smtp" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
 	  <PackageReference Include="FluentValidation" />
 	  <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />

@@ -1,4 +1,4 @@
-namespace MarketPlace.Api.Infrastucture.Email;
+namespace MarketPlace.Api.Infrastucture.OtpValidation;
 
 public static class EmailTemplates
 {
