@@ -31,11 +31,10 @@ public sealed class GoogleLoginHandler(
             return LoginResponse.Fail("Google account email is not verified");
 
         var user = await ResolveUserAsync(payload, cancellationToken);
-        var ttl = AuthSessionOptions.DefaultTtl;
 
-        var token = await authSessionstore.CreateAsync(
-            new AuthSessionRecord(user.Id, user.Roles.Select(r => r.Name)),
-            ttl,
+        var (token, ttl) = await authSessionstore.CreateAsync(
+            user.Id,
+            user.Roles.Select(r => r.Name),
             cancellationToken
         );
 

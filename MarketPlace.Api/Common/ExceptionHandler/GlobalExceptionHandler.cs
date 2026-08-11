@@ -2,24 +2,50 @@
 
 namespace MarketPlace.Api.Common.ExceptionHandler;
 
-public sealed class GlobalExceptionHandler(IWebHostEnvironment env, ILogger<GlobalExceptionHandler> logger) : IExceptionHandler
+public sealed class GlobalExceptionHandler(
+    IWebHostEnvironment env,
+    ILogger<GlobalExceptionHandler> logger
+) : IExceptionHandler
 {
-    public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
+    public async ValueTask<bool> TryHandleAsync(
+        HttpContext httpContext,
+        Exception exception,
+        CancellationToken cancellationToken
+    )
     {
-        (int statuscode, string? detail) = Mapexceptions(exception, env);
+        var (statuscode, detail) = Mapexceptions(exception, env);
 
-        logger.LogError(exception, "Exception was thrown and handled with message {message}", exception.Message);
+        logger.LogError(
+            exception,
+            "Exception was thrown and handled with message {message}",
+            exception.Message
+        );
 
         await Results.Problem(detail, statusCode: statuscode).ExecuteAsync(httpContext);
         return true;
     }
 
-    private static (int statuscode, string detail) Mapexceptions(Exception ex, IWebHostEnvironment webHostEnvironment)
+    private static (int statuscode, string detail) Mapexceptions(
+        Exception exception,
+        IWebHostEnvironment env
+    )
     {
-        return ex is CustomAppExceptions e
-            ? (e.StatusCode, e.Message)
-            : webHostEnvironment.IsDevelopment()
-                ? (StatusCodes.Status500InternalServerError, ex.Message)
-                : (StatusCodes.Status500InternalServerError, "Internal server error");
+        return exception switch
+        {
+            CustomAppExceptions ex => (ex.StatusCode, ex.Message),
+            BadHttpRequestException ex => (
+                StatusCodes.Status400BadRequest,
+                env.IsDevelopment() ? ex.Message : "Bad Request"
+            ),
+            _ => exception.Message.Contains(
+                "AuthorizationPolicy",
+                StringComparison.OrdinalIgnoreCase
+            )
+                ? (StatusCodes.Status403Forbidden, "Forbidden")
+                : (
+                    StatusCodes.Status500InternalServerError,
+                    env.IsDevelopment() ? exception.Message : "Internal server error"
+                ),
+        };
     }
 }

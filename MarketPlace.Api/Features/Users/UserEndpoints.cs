@@ -1,7 +1,9 @@
 ﻿using MarketPlace.Api.Common.Extensions;
+using MarketPlace.Api.Features.Users.ForgotPassword;
 using MarketPlace.Api.Features.Users.Login;
 using MarketPlace.Api.Features.Users.Register;
 using MarketPlace.Api.Infrastucture.Auth;
+using MarketPlace.Api.Infrastucture.RateLimiting;
 
 namespace MarketPlace.Api.Features.Users;
 
@@ -9,27 +11,44 @@ public sealed class UserEndpoints : IRequestEndpoints
 {
     public void Map(IEndpointRouteBuilder builder)
     {
-        RouteGroupBuilder group = builder.MapGroup("users").WithTags("Users");
+        var group = builder.MapGroup("users").WithTags("Users");
 
         RegisterEndpoint.Map(group);
         LoginEnpoint.Map(group);
+        ForgotPasswordEndpoint.Map(group);
 
-        group.MapGet("/", () => "Hello").RequireAuthorization();
-        group.MapGet("/authz", () => "Hello").RequireAuthorization(p => p.RequireRole("role"));
+        group.MapPost("logout", HandleLogout).RequireAuthorization();
 
-        group.MapPost(
-            "logout",
-            async (AuthSessionstore authSessionstore, HttpRequest request, CancellationToken ct) =>
-            {
-                var token = AuthSessionOptions.ExtractToken(request);
+        group
+            .MapGet(
+                "/",
+                (HttpContext httpContext) =>
+                    Results.Ok(
+                        new
+                        {
+                            Message = "Helo",
+                            Datetime = DateTime.UtcNow.ToLocalTime(),
+                            IpAddress = httpContext.GetClientIp(),
+                            Directory = Directory.GetCurrentDirectory(),
+                        }
+                    )
+            )
+            .RequireRateLimiting(RateLimitPolicyKeys.LoginTokenBucket);
+    }
 
-                if (string.IsNullOrWhiteSpace(token))
-                    return Results.NoContent();
+    private static async ValueTask<IResult> HandleLogout(
+        AuthSessionstore authSessionstore,
+        HttpRequest httpRequest,
+        CancellationToken ct
+    )
+    {
+        var token = httpRequest.ExtractToken();
 
-                await authSessionstore.DeleteAsync(token, ct);
+        if (string.IsNullOrWhiteSpace(token))
+            return Results.NoContent();
 
-                return Results.NoContent();
-            }
-        );
+        await authSessionstore.DeleteAsync(token, ct);
+
+        return Results.NoContent();
     }
 }

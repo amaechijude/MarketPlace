@@ -1,6 +1,8 @@
-﻿using MarketPlace.Api.Domain.DatabaseContext;
+﻿using System.ComponentModel.DataAnnotations;
+using MarketPlace.Api.Common.Extensions;
+using MarketPlace.Api.Domain.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
-using System.ComponentModel.DataAnnotations;
+using Microsoft.Extensions.Options;
 
 namespace MarketPlace.Api.Infrastucture.Database;
 
@@ -20,25 +22,33 @@ public static class DatabaseConfig
                     ?? string.Empty
             )
             .ValidateDataAnnotations()
+            .Validate(v => ValidatePostgresqlConnString(v.ConnectionString))
             .ValidateOnStart();
 
         services.AddDbContextFactory<AppDbContext>(
             (sp, db) =>
             {
-                //db.UseNpgsql("connectionString", options =>
-                //{
-                //    options.EnableRetryOnFailure(
-                //        maxRetryCount: 5,
-                //        maxRetryDelay: TimeSpan.FromSeconds(30),
-                //        errorCodesToAdd: null
-                //       );
-                //});
-
-                db.UseInMemoryDatabase(Guid.NewGuid().ToString());
+                var dbValue = sp.GetRequiredService<IOptions<DatabaseOptions>>().Value;
+                db.UseNpgsql(
+                    dbValue.ConnectionString,
+                    options =>
+                    {
+                        options.EnableRetryOnFailure(
+                            maxRetryCount: 5,
+                            maxRetryDelay: TimeSpan.FromSeconds(30),
+                            errorCodesToAdd: null
+                        );
+                    }
+                );
             }
         );
         return services;
     }
+
+    private static bool ValidatePostgresqlConnString(string connectionString) =>
+        connectionString.CharCountIsGreaterThanOrEqual('=', 5)
+        && connectionString.CharCountIsGreaterThanOrEqual(';', 4)
+        && connectionString.Contains("Host", StringComparison.OrdinalIgnoreCase);
 }
 
 public sealed class DatabaseOptions

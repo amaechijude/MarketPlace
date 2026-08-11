@@ -1,6 +1,9 @@
+using System.Net.Mail;
+using System.Threading.Channels;
+using FluentEmail.Core.Interfaces;
+using FluentEmail.Smtp;
 using MarketPlace.Api.Infrastucture.OtpValidation;
 using Microsoft.Extensions.Options;
-using System.Threading.Channels;
 
 namespace MarketPlace.Api.Infrastucture.Email;
 
@@ -33,21 +36,30 @@ public static class EmailDependencyInjection
             .GetRequiredService<IOptions<SmtpSettings>>()
             .Value;
 
+        var fluentMalil = services.AddFluentEmail(smtp.FromEmail);
         if (hostEnvironment.IsProduction())
         {
-            services
-                .AddFluentEmail(smtp.FromEmail)
-                .AddSmtpSender(
-                    host: smtp.Host,
-                    port: smtp.Port,
-                    username: smtp.Username,
-                    password: smtp.Password
-                );
+            fluentMalil.AddSmtpSender(smtp.Host, smtp.Port, smtp.Username, smtp.Password);
         }
         else
         {
-            services.AddFluentEmail(smtp.FromEmail).AddSmtpSender(host: smtp.Host, smtp.Port);
+            fluentMalil.AddSmtpSender(smtp.Host, smtp.Port);
         }
+
+        services.AddSingleton<ISender>(
+            new SmtpSender(
+                (
+                    () =>
+                        new SmtpClient()
+                        {
+                            DeliveryMethod = SmtpDeliveryMethod.Network,
+                            Host = smtp.Host,
+                            Port = smtp.Port,
+                            EnableSsl = hostEnvironment.IsProduction(),
+                        }
+                )
+            )
+        );
         return services;
     }
 

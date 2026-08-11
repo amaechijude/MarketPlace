@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using MarketPlace.Api.Common.Extensions;
 
 namespace MarketPlace.Api.Common.ValidationAttributes;
 
@@ -30,7 +31,7 @@ public sealed class IsValidPasswordAttribute : ValidationAttribute
         if (!password.Any(char.IsAsciiDigit))
             return new ValidationResult("Password must contain at least one digit");
 
-        if (!password.Any(ch => !char.IsLetterOrDigit(ch) && !char.IsWhiteSpace(ch)))
+        if (!password.ContainsSpecialCharacter())
             return new ValidationResult("Password must contain at least one special character");
 
         return ValidationResult.Success;

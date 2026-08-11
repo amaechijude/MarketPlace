@@ -1,3 +1,4 @@
+using MarketPlace.Api.Common.Extensions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 using System.Security.Claims;
@@ -14,7 +15,8 @@ public sealed class AuthSessionHandler(
 {
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        string? token = AuthSessionOptions.ExtractToken(Request);
+        string? token = Request.ExtractToken();
+
         if (string.IsNullOrWhiteSpace(token))
             return AuthenticateResult.NoResult();
 
@@ -23,11 +25,11 @@ public sealed class AuthSessionHandler(
             Context.RequestAborted
         );
         if (session is null)
-            return AuthenticateResult.Fail("Invalid or expired session");
+            return AuthenticateResult.NoResult();
 
         List<Claim> claims =
-        [
-            new(ClaimTypes.NameIdentifier, session.UserId.ToString()),
+            [
+                new(ClaimTypes.NameIdentifier, session.UserId.ToString()),
             .. session.Roles.Select(role => new Claim(ClaimTypes.Role, role)),
         ];
 
@@ -39,6 +41,7 @@ public sealed class AuthSessionHandler(
 
     protected override async Task HandleChallengeAsync(AuthenticationProperties properties)
     {
+
         await Results.Problem(statusCode: StatusCodes.Status401Unauthorized).ExecuteAsync(Context);
     }
 
@@ -46,4 +49,5 @@ public sealed class AuthSessionHandler(
     {
         await Results.Problem(statusCode: StatusCodes.Status403Forbidden).ExecuteAsync(Context);
     }
+
 }

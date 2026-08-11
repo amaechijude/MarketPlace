@@ -32,9 +32,8 @@ public static class ServiceCollectionExtension
         List<Type> handlerClasses = GetHandlers(assembly, typeof(ITransientMarker));
 
         if (handlerClasses.Count == 0)
-        {
             return services;
-        }
+
 
         foreach (Type handler in handlerClasses)
         {
@@ -52,13 +51,12 @@ public static class ServiceCollectionExtension
         List<Type> handlerClasses = GetHandlers(assembly, typeof(ISingletonMarker));
 
         if (handlerClasses.Count == 0)
-        {
             return services;
-        }
+
 
         foreach (Type handler in handlerClasses)
         {
-            services.AddSingleton(handler);
+            services.AddScoped(handler);
         }
 
         return services;

@@ -2,16 +2,16 @@ using MarketPlace.Api.Infrastucture.Auth;
 
 namespace MarketPlace.Api.Common.Extensions;
 
-public static class HttpContextExtension
+public static class HttpResponseExtension
 {
-    public static void Login(
-        this HttpContext httpContext,
+    public static void AttachAccessToken(
+        this HttpResponse response,
         string accessToken,
         TimeSpan ttl,
         IWebHostEnvironment environment
     )
     {
-        httpContext.Response.Cookies.Append(
+        response.Cookies.Append(
             key: AuthSessionOptions.CookieKey,
             value: accessToken,
             options: new CookieOptions

@@ -4,17 +4,16 @@ using MarketPlace.Api.Common.Extensions;
 namespace MarketPlace.Api.Common.ValidationAttributes;
 
 [AttributeUsage(AttributeTargets.All)]
-public sealed class IsValidJwtAttribute : ValidationAttribute
+public class IsAllAsciiDigitsAttribute : ValidationAttribute
 {
-    public IsValidJwtAttribute()
+    public IsAllAsciiDigitsAttribute()
     {
-        // Set a default error message, {0} will be replaced by the property name
-        ErrorMessage = "The {0} field must be a valid Jwt.";
+        ErrorMessage = "The {0} field must be all digits.";
     }
 
     protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
     {
-        if (value is not string stValue || !stValue.CharCountIsGreaterThanOrEqual('.', 2))
+        if (value is not string str || !str.IsAllAsciiDigits())
             return new ValidationResult(FormatErrorMessage(validationContext.DisplayName));
 
         return ValidationResult.Success;

@@ -34,19 +34,9 @@ public sealed class VerificationCodeBackgroundDispatcher(
         await using var scope = serviceProvider.CreateAsyncScope();
         var emailSender = scope.ServiceProvider.GetRequiredService<EmailSender>();
 
-        var htmlBody = EmailTemplates.BuildOtpTemplate("Dear", request.PlainOtp);
-
         await emailSender.SendEmailAsync(
-            new EmailMetaData(request.UserEmail, GetSubject(request.Type), htmlBody),
+            new EmailMetaData(request.UserEmail, request.Subject, request.HtmlBody),
             cancellationToken
         );
     }
-
-    private static string GetSubject(OtpType type) =>
-        type switch
-        {
-            OtpType.Register => "Registration",
-            OtpType.ResetPassword => "Password Reset",
-            _ => "Hello",
-        };
 }

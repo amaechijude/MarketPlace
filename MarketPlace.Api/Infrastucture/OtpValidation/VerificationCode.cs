@@ -11,4 +11,5 @@ public enum OtpType
 {
     Register,
     ResetPassword,
+    Login,
 }

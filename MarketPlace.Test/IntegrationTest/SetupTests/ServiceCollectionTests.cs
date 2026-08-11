@@ -7,7 +7,8 @@ using Microsoft.Extensions.Validation;
 
 namespace MarketPlace.Test.IntegrationTest.SetupTests;
 
-public sealed class ServiceCollectionTests(CustomWebApplicationFactory factory) : IClassFixture<CustomWebApplicationFactory>
+public sealed class ServiceCollectionTests(CustomWebApplicationFactory factory)
+    : IClassFixture<CustomWebApplicationFactory>
 {
     private readonly IServiceProvider _serviceProvider = factory.Services;
 
@@ -17,20 +18,17 @@ public sealed class ServiceCollectionTests(CustomWebApplicationFactory factory) 
         // Arrange
         using var scope = _serviceProvider.CreateScope();
 
-        var validation =
-            scope.ServiceProvider.GetService<ValidationOptions>();
+        var validation = scope.ServiceProvider.GetService<ValidationOptions>();
 
-        var validationOptionsConfig =
-          scope.ServiceProvider.GetService<IConfigureOptions<ValidationOptions>>();
-       
-        var validationOptions =
-            scope.ServiceProvider.GetService<IOptions<ValidationOptions>>();
+        var validationOptionsConfig = scope.ServiceProvider.GetService<
+            IConfigureOptions<ValidationOptions>
+        >();
 
-
+        var validationOptions = scope.ServiceProvider.GetService<IOptions<ValidationOptions>>();
 
         // Assert
-        Assert.NotNull(validationOptions);
-        Assert.NotNull(validationOptions.Value);
+        Assert.NotNull(validation);
+        Assert.NotNull(validationOptions?.Value);
         Assert.NotNull(validationOptionsConfig);
     }
 
@@ -48,9 +46,10 @@ public sealed class ServiceCollectionTests(CustomWebApplicationFactory factory) 
     {
         using var scope = _serviceProvider.CreateScope();
 
-        var exceptionHandler = scope.ServiceProvider.GetServices<IExceptionHandler>()
+        var exceptionHandler = scope
+            .ServiceProvider.GetServices<IExceptionHandler>()
             .FirstOrDefault(s => s.GetType().Name == nameof(GlobalExceptionHandler));
+
         Assert.NotNull(exceptionHandler);
     }
-
 }

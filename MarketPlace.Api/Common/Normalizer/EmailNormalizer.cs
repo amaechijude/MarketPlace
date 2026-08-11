@@ -1,5 +1,4 @@
 ﻿using MarketPlace.Api.Common.ExceptionHandler;
-using MarketPlace.Api.Common.Extensions;
 
 namespace MarketPlace.Api.Common.Normalizer;
 
@@ -8,14 +7,16 @@ public static class EmailNormalizer
     public static string Normalize(string email)
     {
         email = email.Trim();
-        if (email.ContainsWhiteSpace())
-        {
+        if (email.Contains(' '))
             throw new EmailWhiteSpaceException();
-        }
+
+        if (!email.Contains('@'))
+            throw new EmailWhiteSpaceException("Invaliid Email");
+
 
         return email.ToLowerInvariant();
 
     }
 }
 
-public sealed class EmailWhiteSpaceException() : CustomAppExceptions("Email cannot contain whitespace");
+public sealed class EmailWhiteSpaceException(string message = "Email cannot contain whitespace") : CustomAppExceptions(message);

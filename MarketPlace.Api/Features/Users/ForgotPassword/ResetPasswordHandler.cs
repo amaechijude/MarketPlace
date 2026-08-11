@@ -1,34 +1,32 @@
 using MarketPlace.Api.Common.Extensions;
 using MarketPlace.Api.Domain.DatabaseContext;
+using MarketPlace.Api.Domain.Entities;
 using MarketPlace.Api.Features.Users.Login;
 using MarketPlace.Api.Infrastucture.Auth;
 using MarketPlace.Api.Infrastucture.OtpValidation;
+using Microsoft.AspNetCore.Identity;
 
-namespace MarketPlace.Api.Features.Users.Register;
+namespace MarketPlace.Api.Features.Users.ForgotPassword;
 
-public sealed class RegisterUserVerifyOtpHandler(
+public sealed class ResetPasswordHandler(
     AppDbContext context,
     VerificationCodeManager verificationCodeManager,
-    AuthSessionstore authSessionstore
+    AuthSessionstore authSessionstore,
+    IPasswordHasher<User> hasher
 ) : IRequestHandler
 {
-    /// <summary>
-    /// Verify otp and login
-    /// </summary>
-    /// <param name="request"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
     public async Task<LoginResponse> HandleAsync(
-        RegisterUserVerifyOtpRequest request,
+        ResetPasswordRequest request,
         CancellationToken cancellationToken
     )
     {
         var result = await verificationCodeManager.ValidateOtp(
             request.OtpInput,
             request.OtpId,
-            OtpType.Register,
+            OtpType.ResetPassword,
             cancellationToken
         );
+
         if (!result.IsValid || result.UserId.IsEmpty())
             return LoginResponse.Fail();
 
@@ -40,14 +38,16 @@ public sealed class RegisterUserVerifyOtpHandler(
         if (user is null)
             return LoginResponse.Fail();
 
-        if (user is { EmailConfrimed: false })
-        {
-            user.MarkEmailConfirmed();
-            await context.SaveChangesAsync(cancellationToken);
-        }
+        var hash = hasher.HashPassword(user, request.Password);
+        user.AddPasswordHash(hash);
+        await context.SaveChangesAsync(cancellationToken);
 
         // login
-        var (token, ttl) = await authSessionstore.CreateAsync(user.Id, [], cancellationToken);
+        var (token, ttl) = await authSessionstore.CreateAsync(
+            user.Id,
+            user.Roles.Select(r => r.Name),
+            cancellationToken
+        );
 
         return LoginResponse.Success(token, ttl);
     }

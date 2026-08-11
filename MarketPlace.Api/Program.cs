@@ -1,17 +1,25 @@
+using System.Reflection;
+using DotNetEnv;
+using DotNetEnv.Configuration;
 using FluentValidation;
 using MarketPlace.Api.Common.ExceptionHandler;
 using MarketPlace.Api.Common.Extensions;
 using MarketPlace.Api.Domain.Entities;
 using MarketPlace.Api.Features.Users.Login;
+using MarketPlace.Api.Features.Users.Register;
 using MarketPlace.Api.Infrastucture.Auth;
+using MarketPlace.Api.Infrastucture.Cache;
 using MarketPlace.Api.Infrastucture.Database;
 using MarketPlace.Api.Infrastucture.Email;
 using MarketPlace.Api.Infrastucture.OtpValidation;
+using MarketPlace.Api.Infrastucture.RateLimiting;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Caching.Hybrid;
 using Scalar.AspNetCore;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+builder.Configuration.AddDotNetEnv(options: LoadOptions.TraversePath());
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -28,7 +36,7 @@ builder
 builder
     .Services.AddValidation()
     .AddSingleton(_ => TimeProvider.System)
-    .AddValidatorsFromAssemblyContaining<IRequestHandler>()
+    .AddValidatorsFromAssemblyContaining<RegisterUserRequestValidator>(includeInternalTypes: true)
     .AddExceptionHandler<GlobalExceptionHandler>()
     .AddProblemDetails(options =>
         options.CustomizeProblemDetails = ctx =>
@@ -40,7 +48,7 @@ builder
     );
 
 // request and endpoints handlers
-var assembly = typeof(Program).Assembly;
+Assembly assembly = typeof(Program).Assembly;
 builder
     .Services.AddRequestEndpoints(assembly)
     .AddScopedRequestHandlers(assembly)
@@ -48,14 +56,7 @@ builder
     .AddTransientHandlers(assembly);
 
 // Cache
-builder.Services.AddHybridCache(options =>
-{
-    options.DefaultEntryOptions = new HybridCacheEntryOptions
-    {
-        Expiration = TimeSpan.FromMinutes(5),
-        LocalCacheExpiration = TimeSpan.FromMinutes(2),
-    };
-});
+builder.Services.AddCacheInfrastructure(builder.Configuration);
 
 // Auth
 builder
@@ -72,12 +73,19 @@ builder.Services.AddAuthorization();
 // infra
 builder
     .Services.AddDatabaseInfrastructure(builder.Configuration)
-    .AddEmailInfrastructure(builder.Environment);
+    .AddEmailInfrastructure(builder.Environment)
+    .AddRateLimitingInfrastructure();
 
 //hosted service
 builder.Services.AddHostedService<VerificationCodeBackgroundDispatcher>();
 
-WebApplication app = builder.Build();
+// forwadedheaders
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+});
+
+var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -92,7 +100,7 @@ if (app.Environment.IsDevelopment())
 app.UseExceptionHandler();
 
 // 2 Https redirection
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 // 3 Static files
 
@@ -100,7 +108,11 @@ app.UseHttpsRedirection();
 
 // 5 Use Routing
 
+// 5.1 forwaded heades
+app.UseForwardedHeaders();
+
 // 5.5 Rate Limiting
+app.UseRateLimiter();
 
 // 5.7 CORS
 
@@ -114,5 +126,9 @@ app.UseAuthorization();
 
 // Map endpoints
 app.MapRequestEndpoints();
+if (app.Environment.IsDevelopment())
+    app.MapGet("/", (HttpResponse request) => request.Redirect("/scalar/v1"))
+        .ExcludeFromApiReference()
+        .ExcludeFromDescription();
 
 app.Run();

@@ -1,8 +1,8 @@
-using MarketPlace.Api.Common.Extensions;
-using Microsoft.Extensions.Caching.Hybrid;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Channels;
+using MarketPlace.Api.Common.Extensions;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace MarketPlace.Api.Infrastucture.OtpValidation;
 
@@ -50,7 +50,7 @@ public sealed class VerificationCodeManager(
         return key;
     }
 
-    public async Task<OtpValidationResult> ValidateOtp(
+    public async ValueTask<OtpValidationResult> ValidateOtp(
         string userInput,
         Guid otpKey,
         OtpType type,
@@ -66,11 +66,16 @@ public sealed class VerificationCodeManager(
         if (otp is null)
             return OtpValidationResult.Failed();
 
-        bool isValid = IsValid(userInput, otp, type, timeProvider.GetUtcNow());
+        bool isValidHash = CryptographicOperations.FixedTimeEquals(
+            Encoding.UTF8.GetBytes(HashOtp(userInput)),
+            Encoding.UTF8.GetBytes(otp.HashValue)
+        );
 
-        await hybridCache.RemoveAsync(otpKey.ToString(), cancellationToken);
+        bool istype = otp.Type == type;
 
-        return isValid ? OtpValidationResult.Success(otp.UserId) : OtpValidationResult.Failed();
+        return istype && isValidHash
+            ? OtpValidationResult.Success(otp.UserId)
+            : OtpValidationResult.Failed();
     }
 
     private static string HashOtp(string input)
@@ -80,7 +85,7 @@ public sealed class VerificationCodeManager(
         return Convert.ToHexString(hash);
     }
 
-    private static bool IsValid(
+    private static bool IsValidHa(
         string input,
         OtpVerificationCode otp,
         OtpType type,

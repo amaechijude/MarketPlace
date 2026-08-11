@@ -5,15 +5,19 @@ using System.Text;
 
 namespace MarketPlace.Api.Infrastucture.Auth;
 
-public sealed class AuthSessionstore(HybridCache hybridCache) : ISingletonMarker
+public sealed class AuthSessionstore(HybridCache hybridCache, TimeProvider timeProvider)
+    : ISingletonMarker
 {
-    public async ValueTask<string> CreateAsync(
-        AuthSessionRecord sessionRecord,
-        TimeSpan ttl,
-        CancellationToken cancellationToken
+    public async ValueTask<(string accessToken, TimeSpan ttl)> CreateAsync(
+        Guid userId,
+        IEnumerable<string> roles,
+        CancellationToken ct
     )
     {
-        string token = GenerateToken();
+        var token = GenerateToken();
+        var ttl = TimeSpan.FromDays(7);
+
+        var sessionRecord = new AuthSessionRecord(userId, roles, timeProvider.GetUtcNow().Add(ttl));
 
         await hybridCache.SetAsync(
             key: HashKey(token),
@@ -21,15 +25,15 @@ public sealed class AuthSessionstore(HybridCache hybridCache) : ISingletonMarker
             options: new HybridCacheEntryOptions
             {
                 Expiration = ttl,
-                LocalCacheExpiration = ttl / 2,
+                LocalCacheExpiration = TimeSpan.FromMinutes(5),
             },
-            cancellationToken: cancellationToken
+            cancellationToken: ct
         );
 
-        return token;
+        return (token, ttl);
     }
 
-    public async Task<AuthSessionRecord?> GetSessionAsync(
+    public async ValueTask<AuthSessionRecord?> GetSessionAsync(
         string token,
         CancellationToken cancellationToken
     ) =>

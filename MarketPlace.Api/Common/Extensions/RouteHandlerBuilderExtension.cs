@@ -18,7 +18,7 @@ public static class RouteHandlerBuilderExtension
                 var body = context.Arguments.OfType<TRequest>().FirstOrDefault();
                 if (body is null)
                     return Results.Problem(
-                        $"Missing request body or form {nameof(TRequest)}",
+                        $"Missing request body or form {nameof(body)}",
                         statusCode: 400
                     );
 
@@ -37,9 +37,7 @@ public static class RouteHandlerBuilderExtension
                         context.HttpContext.RequestAborted
                     );
                     if (!result.IsValid)
-                    {
                         return Results.ValidationProblem(errors: result.ToDictionary());
-                    }
                 }
 
                 return await next(context);

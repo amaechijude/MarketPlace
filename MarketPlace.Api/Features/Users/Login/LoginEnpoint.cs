@@ -15,20 +15,44 @@ public static class LoginEnpoint
                 async (
                     [FromBody] EmailLoginRequest request,
                     [FromServices] EmailLoginHandler handler,
-                    HttpContext httpContext,
-                    IWebHostEnvironment env
+                    IWebHostEnvironment env,
+                    HttpResponse httpResponse,
+                    CancellationToken cancellation
                 ) =>
                 {
-                    var response = await handler.HandleAsync(request, httpContext.RequestAborted);
+                    LoginResponse response = await handler.HandleAsync(request, cancellation);
                     if (!response.IsSuccess)
-                        return Results.Problem(response.Error);
+                        return Results.Problem(response.Error, statusCode: 400);
 
-                    httpContext.Login(response.AccesToken, response.Ttl, env);
+                    if (Guid.TryParse(response.AccesToken, out Guid guid))
+                        return Results.Ok(new EmailLoginResponse(guid));
+
+                    httpResponse.AttachAccessToken(response.AccesToken, response.Ttl, env);
                     return Results.NoContent();
                 }
             )
             .Withvalidation<EmailLoginRequest>()
-            .Produces(204);
+            .Produces(204)
+            .Produces<EmailLoginResponse>(202);
+
+        group.MapPost(
+            "/verify-otp",
+            async (
+                [FromBody] EmailLoginVerifyOtpRequest request,
+                [FromServices] EmailLoginHandler handler,
+                IWebHostEnvironment env,
+                HttpResponse httpResponse,
+                CancellationToken cancellationToken
+            ) =>
+            {
+                LoginResponse response = await handler.VerifyOtpAsync(request, cancellationToken);
+                if (!response.IsSuccess)
+                    return Results.Problem(response.Error, statusCode: 400);
+
+                httpResponse.AttachAccessToken(response.AccesToken, response.Ttl, env);
+                return Results.NoContent();
+            }
+        );
 
         group
             .MapPost(
@@ -36,15 +60,16 @@ public static class LoginEnpoint
                 async (
                     [FromBody] GoogleLoginRequest request,
                     [FromServices] GoogleLoginHandler handler,
-                    HttpContext httpContext,
-                    IWebHostEnvironment env
+                    IWebHostEnvironment env,
+                HttpResponse httpResponse,
+                CancellationToken cancellationToken
                 ) =>
                 {
-                    var response = await handler.HandleAsync(request, httpContext.RequestAborted);
+                    LoginResponse response = await handler.HandleAsync(request, cancellationToken);
                     if (!response.IsSuccess)
                         return Results.Problem(response.Error);
 
-                    httpContext.Login(response.AccesToken, response.Ttl, env);
+                    httpResponse.AttachAccessToken(response.AccesToken, response.Ttl, env);
                     return Results.NoContent();
                 }
             )

@@ -3,46 +3,47 @@ using MarketPlace.Api.Common.Extensions;
 using MarketPlace.Api.Features.Users.Login;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MarketPlace.Api.Features.Users.Register;
+namespace MarketPlace.Api.Features.Users.ForgotPassword;
 
-public static class RegisterEndpoint
+public static class ForgotPasswordEndpoint
 {
     public static void Map(RouteGroupBuilder group)
     {
-        group = group.MapGroup("register");
+        group = group.MapGroup("forgot-password");
 
         group
             .MapPost(
                 "/",
                 async (
-                    [FromBody] RegisterUserRequest request,
-                    [FromServices] RegisterUserHandler handler,
+                    [FromBody] ForgotPasswordRequest request,
+                    [FromServices] ForgotPasswordHandler handler,
                     CancellationToken ct
                 ) => (await handler.HandleAsync(request, ct)).ToMinimalApiResult()
             )
-            .Withvalidation<RegisterUserRequest>()
-            .Produces<RegisterUserResponse>();
+            .Withvalidation<ForgotPasswordRequest>()
+            .Produces<ForgotPasswordResponse>();
 
         group
             .MapPost(
                 "verify",
                 async (
-                    [FromBody] RegisterUserVerifyOtpRequest request,
-                    [FromServices] RegisterUserVerifyOtpHandler handler,
+                    [FromBody] ResetPasswordRequest request,
+                    [FromServices] ResetPasswordHandler handler,
+                    HttpResponse httpResponse,
                     IWebHostEnvironment env,
-                HttpResponse httpResponse,
                     CancellationToken cancellationToken
                 ) =>
                 {
                     LoginResponse response = await handler.HandleAsync(request, cancellationToken);
                     if (!response.IsSuccess)
                         return Results.Problem(response.Error);
+
                     httpResponse.AttachAccessToken(response.AccesToken, response.Ttl, env);
 
                     return Results.NoContent();
                 }
             )
-            .Withvalidation<RegisterUserVerifyOtpRequest>()
+            .Withvalidation<ResetPasswordRequest>()
             .Produces(204);
     }
 }
