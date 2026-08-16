@@ -11,7 +11,7 @@ public static class CacheServiceCollection
         IConfiguration configuration
     )
     {
-        var redisUrl = configuration["RedisUrl"] ?? "localhost:6379";
+        var redisUrl = configuration.GetConnectionString("Redis") ?? string.Empty;
 
         services
             .AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisUrl))

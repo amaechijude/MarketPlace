@@ -11,6 +11,7 @@ using MarketPlace.Api.Infrastucture.Auth;
 using MarketPlace.Api.Infrastucture.Cache;
 using MarketPlace.Api.Infrastucture.Database;
 using MarketPlace.Api.Infrastucture.Email;
+using MarketPlace.Api.Infrastucture.MediaStorage;
 using MarketPlace.Api.Infrastucture.OtpValidation;
 using MarketPlace.Api.Infrastucture.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -74,7 +75,8 @@ builder.Services.AddAuthorization();
 builder
     .Services.AddDatabaseInfrastructure(builder.Configuration)
     .AddEmailInfrastructure(builder.Environment)
-    .AddRateLimitingInfrastructure();
+    .AddRateLimitingInfrastructure()
+    .AddMediaStorageInfrastructure(builder.Configuration);
 
 //hosted service
 builder.Services.AddHostedService<VerificationCodeBackgroundDispatcher>();

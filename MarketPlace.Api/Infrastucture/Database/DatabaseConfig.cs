@@ -1,8 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
-using MarketPlace.Api.Common.Extensions;
+﻿using MarketPlace.Api.Common.Extensions;
 using MarketPlace.Api.Domain.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using System.ComponentModel.DataAnnotations;
 
 namespace MarketPlace.Api.Infrastucture.Database;
 
@@ -13,12 +13,10 @@ public static class DatabaseConfig
         IConfiguration configuration
     )
     {
-        DotNetEnv.Env.TraversePath().Load();
         services
             .AddOptions<DatabaseOptions>()
             .Configure(options =>
-                options.ConnectionString =
-                    Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+                options.ConnectionString = configuration.GetConnectionString("Database")
                     ?? string.Empty
             )
             .ValidateDataAnnotations()
