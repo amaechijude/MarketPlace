@@ -1,4 +1,3 @@
-using System.Reflection;
 using DotNetEnv;
 using DotNetEnv.Configuration;
 using FluentValidation;
@@ -17,6 +16,7 @@ using MarketPlace.Api.Infrastucture.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Scalar.AspNetCore;
+using System.Reflection;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -129,7 +129,7 @@ app.UseAuthorization();
 // Map endpoints
 app.MapRequestEndpoints();
 if (app.Environment.IsDevelopment())
-    app.MapGet("/", (HttpResponse request) => request.Redirect("/scalar/v1"))
+    app.MapGet("/", (HttpResponse response) => response.Redirect("/scalar/v1"))
         .ExcludeFromApiReference()
         .ExcludeFromDescription();
 

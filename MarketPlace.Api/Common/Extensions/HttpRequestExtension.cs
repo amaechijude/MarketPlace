@@ -6,21 +6,25 @@ public static class HttpRequestExtension
 {
     public static string? ExtractToken(this HttpRequest request)
     {
-        if (
-            request.Cookies.TryGetValue(AuthSessionOptions.CookieKey, out var token)
-            && !string.IsNullOrWhiteSpace(token)
-        )
-            return token;
+        _ = request.Cookies.TryGetValue(AuthSessionOptions.CookieKey, out var accessToken);
+        return accessToken;
 
-        var header = request.Headers.Authorization.ToString();
-        const string scheme = AuthSessionOptions.DefaultAuthenticationScheme;
-        var length = scheme.Length;
+        // implement both cookie and auth headers for both spa and mobile app
+        // if (
+        //     request.Cookies.TryGetValue(AuthSessionOptions.CookieKey, out var token)
+        //     && !string.IsNullOrWhiteSpace(token)
+        // )
+        //     return token;
 
-        if (string.IsNullOrWhiteSpace(header) || header.Length < length + 2)
-            return null;
+        // var header = request.Headers.Authorization.ToString();
+        // const string scheme = AuthSessionOptions.DefaultAuthenticationScheme;
+        // var length = scheme.Length;
 
-        return header.StartsWith(scheme, StringComparison.OrdinalIgnoreCase)
-            ? header[length..].Trim()
-            : null;
+        // if (string.IsNullOrWhiteSpace(header) || header.Length < length + 2)
+        //     return null;
+
+        // return header.StartsWith(scheme, StringComparison.OrdinalIgnoreCase)
+        //     ? header[length..].Trim()
+        //     : null;
     }
 }

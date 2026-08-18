@@ -2,23 +2,23 @@ using Amazon.S3;
 using Amazon.S3.Model;
 using MarketPlace.Api.Common.Extensions;
 using Microsoft.Extensions.Options;
-using SixLabors.ImageSharp;
 using SkiaSharp;
 
 namespace MarketPlace.Api.Infrastucture.MediaStorage.CloudflareR2;
 
+public sealed record UploadImageRequest(IFormFile File, string Folder, bool IsThumbnail);
+
 public sealed class R2ImageUploadService(IAmazonS3 s3Client, IOptions<R2Options> settings)
-    : IRequestHandler
+    : ISingletonMarker
 {
     private readonly R2Options _settings = settings.Value;
 
     public async Task<ImageUploadResult> UploadImageAsync(
-        IFormFile file,
-        string folder,
+        UploadImageRequest request,
         CancellationToken cancellationToken
     )
     {
-        await using var stream = file.OpenReadStream();
+        await using var stream = request.File.OpenReadStream();
         using var bitmap = SKBitmap.Decode(stream);
 
         using var image = SKImage.FromBitmap(bitmap);
@@ -27,9 +27,9 @@ public sealed class R2ImageUploadService(IAmazonS3 s3Client, IOptions<R2Options>
         using var compressesd = new MemoryStream();
         await data.AsStream().CopyToAsync(compressesd, cancellationToken);
 
-        var fileKey = $"{folder}/{Guid.NewGuid()}.webp";
+        var fileKey = $"{request.Folder}/{Guid.NewGuid()}.webp";
 
-        var request = new PutObjectRequest
+        var r2Request = new PutObjectRequest
         {
             BucketName = _settings.BucketName,
             Key = fileKey,
@@ -40,16 +40,19 @@ public sealed class R2ImageUploadService(IAmazonS3 s3Client, IOptions<R2Options>
             DisablePayloadSigning = true,
         };
 
-        await s3Client.PutObjectAsync(request, cancellationToken);
+        await s3Client.PutObjectAsync(r2Request, cancellationToken);
 
-        return new ImageUploadResult($"{_settings.PublicBaseUrl.TrimEnd('/')}/{fileKey}", fileKey);
+        return new ImageUploadResult(
+            $"{_settings.PublicBaseUrl.TrimEnd('/')}/{fileKey}",
+            request.IsThumbnail,
+            fileKey
+        );
     }
 
-    public async Task<ImageUploadResult[]> UploadImageAsync(
-        IEnumerable<IFormFile> files,
-        string folder,
+    public async Task<List<ImageUploadResult>> UploadImageAsync(
+        IEnumerable<UploadImageRequest> requests,
         CancellationToken cancellationToken
-    ) => [.. await Task.WhenAll(files.Select(f => UploadImageAsync(f, folder, cancellationToken)))];
+    ) => [.. await Task.WhenAll(requests.Select(r => UploadImageAsync(r, cancellationToken)))];
 
     public async Task DeleteImageAsync(string fileKey, CancellationToken cancellationToken)
     {
@@ -68,4 +71,4 @@ public sealed class R2ImageUploadService(IAmazonS3 s3Client, IOptions<R2Options>
     }
 }
 
-public sealed record ImageUploadResult(string FileUrl, string FileKey);
+public sealed record ImageUploadResult(string FileUrl, bool Isthubnail, string FileKey);

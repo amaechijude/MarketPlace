@@ -2,21 +2,25 @@ namespace MarketPlace.Api.Domain.Entities;
 
 public sealed class Product
 {
-    public Guid Id { get; init; }
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public long PriceInKobo { get; set; }
-    public string ThumbnailUrl { get; set; } = string.Empty;
-    public string ThumbnailFileKey { get; set; } = string.Empty;
+    public required Guid Id { get; init; }
+    public required string Name { get; set; } = string.Empty;
+    public required string ShortDescription { get; set; } = string.Empty;
+    public required string LongDescription { get; set; } = string.Empty;
+    public required long PriceInKobo { get; set; }
+    public required string ThumbnailUrl { get; set; } = string.Empty;
+    public required string ThumbnailFileKey { get; set; } = string.Empty;
 
-    public DateTimeOffset CreatedAt { get; init; }
-    public DateTimeOffset UpdatedAt { get; set; }
+    public required DateTimeOffset CreatedAt { get; init; }
+    public DateTimeOffset? UpdatedAt { get; set; }
 
-    // Stored as comma-separated or JSON in the DB column; configured via Fluent API
-    public string[] ImageArray { get; set; } = [];
-    public string[] ImageFileKeysArray { get; set; } = [];
+    // Stored as comma-separated string
+    public required string[] ImageUrlsArray { get; set; } = [];
+    public required string[] ImageFileKeysArray { get; set; } = [];
 
     // query filters
-    public bool IsPublished { get; set; } = true;
-    public Guid VendorId { get; init; }
+    public required bool IsPublished { get; set; }
+    public Category Category { get; set; } = null!;
+    public required int CategoryId { get; set; }
+
+    public required Guid CreatedBy { get; init; }
 }

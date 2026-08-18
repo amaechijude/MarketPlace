@@ -23,12 +23,12 @@ public sealed class ServiceCollectionTests(CustomWebApplicationFactory factory)
         Assert.NotNull(registerValidator);
 
         // 2. Assert builder.Services.AddValidation() (from Program.cs line 45) registration
-        var validationOptionsConfig =
-            scope.ServiceProvider.GetService<IConfigureOptions<ValidationOptions>>();
+        var validationOptionsConfig = scope.ServiceProvider.GetService<
+            IConfigureOptions<ValidationOptions>
+        >();
         Assert.NotNull(validationOptionsConfig);
 
-        var validationOptions =
-            scope.ServiceProvider.GetService<IOptions<ValidationOptions>>();
+        var validationOptions = scope.ServiceProvider.GetService<IOptions<ValidationOptions>>();
         Assert.NotNull(validationOptions);
         Assert.NotNull(validationOptions.Value);
     }
@@ -42,18 +42,4 @@ public sealed class ServiceCollectionTests(CustomWebApplicationFactory factory)
         var problemDetailsService = scope.ServiceProvider.GetService<IProblemDetailsService>();
         Assert.NotNull(problemDetailsService);
     }
-
-    //[Fact]
-    //public void OutboxServices_ShouldBeRegistered()
-    //{
-    //    using var scope = _serviceProvider.CreateScope();
-
-    //    var emailDispatcher = scope.ServiceProvider.GetService<IEmailDispatcher>();
-    //    Assert.NotNull(emailDispatcher);
-
-    //    var worker = scope
-    //        .ServiceProvider.GetServices<IHostedService>()
-    //        .FirstOrDefault(s => s.GetType().Name == nameof(OutboxBackgroundWorker));
-    //    Assert.NotNull(worker);
-    //}
 }
