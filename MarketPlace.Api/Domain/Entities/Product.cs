@@ -11,7 +11,8 @@ public sealed class Product
     public required string ThumbnailFileKey { get; set; } = string.Empty;
 
     public required DateTimeOffset CreatedAt { get; init; }
-    public DateTimeOffset? UpdatedAt { get; set; }
+    public DateTimeOffset? LastUpdatedAt { get; set; }
+    public Guid? LastUpdatedBy { get; set; }
 
     // Stored as comma-separated string
     public required string[] ImageUrlsArray { get; set; } = [];

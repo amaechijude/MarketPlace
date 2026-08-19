@@ -60,7 +60,7 @@ public sealed class CreateProductHandler(
             ThumbnailUrl = thumbnail.FileUrl,
             ThumbnailFileKey = thumbnail.FileKey,
             CreatedAt = utcNow,
-            UpdatedAt = utcNow,
+            LastUpdatedAt = utcNow,
             ImageUrlsArray = upload.Select(s => s.FileUrl).ToArray(),
             ImageFileKeysArray = upload.Select(s => s.FileKey).ToArray(),
             IsPublished = request.IsPublished,
