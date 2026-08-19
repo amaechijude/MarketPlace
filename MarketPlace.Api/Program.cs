@@ -1,3 +1,4 @@
+using System.Reflection;
 using DotNetEnv;
 using DotNetEnv.Configuration;
 using FluentValidation;
@@ -12,11 +13,11 @@ using MarketPlace.Api.Infrastucture.Database;
 using MarketPlace.Api.Infrastucture.Email;
 using MarketPlace.Api.Infrastucture.MediaStorage;
 using MarketPlace.Api.Infrastucture.OtpValidation;
+using MarketPlace.Api.Infrastucture.PaymentHandlers;
 using MarketPlace.Api.Infrastucture.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Scalar.AspNetCore;
-using System.Reflection;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -76,7 +77,8 @@ builder
     .Services.AddDatabaseInfrastructure(builder.Configuration)
     .AddEmailInfrastructure(builder.Environment)
     .AddRateLimitingInfrastructure()
-    .AddMediaStorageInfrastructure(builder.Configuration);
+    .AddMediaStorageInfrastructure(builder.Configuration)
+    .AddPaymentHandlersInfrastructure(builder.Configuration);
 
 //hosted service
 builder.Services.AddHostedService<VerificationCodeBackgroundDispatcher>();
@@ -88,6 +90,8 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 });
 
 var app = builder.Build();
+
+app.UseForwardedHeaders();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -101,30 +105,20 @@ if (app.Environment.IsDevelopment())
 // 1 Exception HAndling
 app.UseExceptionHandler();
 
-// 2 Https redirection
-// app.UseHttpsRedirection();
+app.UseHttpsRedirection();
+app.UseHsts();
 
-// 3 Static files
-
-// 4 Cookie policy
-
-// 5 Use Routing
-
-// 5.1 forwaded heades
-app.UseForwardedHeaders();
-
-// 5.5 Rate Limiting
 app.UseRateLimiter();
 
-// 5.7 CORS
+// CORS
 
-// 6 Use Authn
+//  Use Authn
 app.UseAuthentication();
 
-// 7 Authz
+//  Authz
 app.UseAuthorization();
 
-// 8 Antiforgery
+// Antiforgery
 
 // Map endpoints
 app.MapRequestEndpoints();
