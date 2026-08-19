@@ -17,8 +17,6 @@ public sealed class CreateProductHandler(
     ILogger<CreateProductHandler> logger
 ) : IRequestHandler
 {
-    private const string FolderName = "products";
-
     public async Task<ApiResponse<int>> HandleAsync(
         CreateProductRequest request,
         IEnumerable<string> roleList,
@@ -96,4 +94,6 @@ public sealed class CreateProductHandler(
             return null;
         }
     }
+
+    private const string FolderName = "products";
 }

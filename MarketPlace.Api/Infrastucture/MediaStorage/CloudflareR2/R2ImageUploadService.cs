@@ -65,10 +65,7 @@ public sealed class R2ImageUploadService(IAmazonS3 s3Client, IOptions<R2Options>
     public async Task DeleteImageAsync(
         IEnumerable<string> fileKeys,
         CancellationToken cancellationToken
-    )
-    {
-        await Task.WhenAll(fileKeys.Select(f => DeleteImageAsync(f, cancellationToken)));
-    }
+    ) => await Task.WhenAll(fileKeys.Select(f => DeleteImageAsync(f, cancellationToken)));
 }
 
 public sealed record ImageUploadResult(string FileUrl, bool Isthubnail, string FileKey);

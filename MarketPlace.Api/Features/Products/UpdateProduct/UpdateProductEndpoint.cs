@@ -32,5 +32,29 @@ public static class UpdateProductEndpoint
             .RequireAuthorization()
             .Withvalidation<UpdateProductRequest>()
             .Produces(201);
+
+        group
+            .MapPut(
+                "{productId:guid}/images",
+                async (
+                    [FromRoute] Guid productId,
+                    [FromBody] UpdateProductImagesRequest request,
+                    [FromServices] UpdateProductImageHandler handler,
+                    ClaimsPrincipal user,
+                    CancellationToken ct
+                ) =>
+                {
+                    var userId = user.UserId;
+
+                    return userId.IsEmpty()
+                        ? Results.Problem(statusCode: StatusCodes.Status401Unauthorized)
+                        : (
+                            await handler.HandleAsync(productId, request, userId, ct)
+                        ).ToMinimalApiResult();
+                }
+            )
+            .RequireAuthorization()
+            .Withvalidation<UpdateProductImagesRequest>()
+            .Produces(201);
     }
 }

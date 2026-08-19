@@ -9,14 +9,12 @@ public static class ServiceCollectionExtension
         Assembly assembly
     )
     {
-        List<Type> handlerClasses = GetHandlers(assembly, typeof(IRequestHandler));
+        var handlerClasses = GetHandlers(assembly, typeof(IRequestHandler));
 
         if (handlerClasses.Count == 0)
-        {
             return services;
-        }
 
-        foreach (Type handler in handlerClasses)
+        foreach (var handler in handlerClasses)
         {
             services.AddScoped(handler);
         }
@@ -34,7 +32,6 @@ public static class ServiceCollectionExtension
         if (handlerClasses.Count == 0)
             return services;
 
-
         foreach (Type handler in handlerClasses)
         {
             services.AddTransient(handler);
@@ -48,13 +45,12 @@ public static class ServiceCollectionExtension
         Assembly assembly
     )
     {
-        List<Type> handlerClasses = GetHandlers(assembly, typeof(ISingletonMarker));
+        var handlerClasses = GetHandlers(assembly, typeof(ISingletonMarker));
 
         if (handlerClasses.Count == 0)
             return services;
 
-
-        foreach (Type handler in handlerClasses)
+        foreach (var handler in handlerClasses)
         {
             services.AddScoped(handler);
         }

@@ -1,5 +1,5 @@
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using System.Reflection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace MarketPlace.Api.Common.Extensions;
 
@@ -15,7 +15,7 @@ public static class RequestEndpointExtension
         Assembly assembly
     )
     {
-        IEnumerable<ServiceDescriptor> endpoints = assembly
+        var endpoints = assembly
             .DefinedTypes.Where(t =>
                 t.IsAssignableTo(typeof(IRequestEndpoints))
                 && t is { IsAbstract: false, IsInterface: false, IsClass: true }
@@ -28,11 +28,9 @@ public static class RequestEndpointExtension
 
     public static void MapRequestEndpoints(this WebApplication app)
     {
-        IEnumerable<IRequestEndpoints> endpoints = app
-            .Services.GetRequiredService<IEnumerable<IRequestEndpoints>>()
-            .Reverse();
+        var endpoints = app.Services.GetRequiredService<IEnumerable<IRequestEndpoints>>().Reverse();
 
-        foreach (IRequestEndpoints endpoint in endpoints)
+        foreach (var endpoint in endpoints)
         {
             endpoint.Map(app);
         }
