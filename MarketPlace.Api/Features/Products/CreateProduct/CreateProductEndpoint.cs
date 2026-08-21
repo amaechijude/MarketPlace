@@ -30,7 +30,7 @@ public static class CreateProductEndpoint
             )
             .RequireAuthorization(p => p.RequireRole("Vendor"))
             .Accepts<CreateProductRequest>("multipart/form-data")
-            .Withvalidation<CreateProductRequest>()
+            .WithValidation<CreateProductRequest>()
             .DisableAntiforgery()
             .Produces(StatusCodes.Status201Created);
     }

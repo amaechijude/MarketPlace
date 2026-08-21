@@ -10,7 +10,7 @@ public static class RouteHandlerBuilderExtension
     /// <typeparam name="TRequest"></typeparam>
     /// <param name="builder"></param>
     /// <returns>RouteHandlerBuilder</returns>
-    public static RouteHandlerBuilder Withvalidation<TRequest>(this RouteHandlerBuilder builder)
+    public static RouteHandlerBuilder WithValidation<TRequest>(this RouteHandlerBuilder builder)
     {
         builder.AddEndpointFilter(
             async (context, next) =>

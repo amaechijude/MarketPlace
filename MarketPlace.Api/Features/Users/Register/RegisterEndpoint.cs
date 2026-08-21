@@ -20,7 +20,7 @@ public static class RegisterEndpoint
                     CancellationToken ct
                 ) => (await handler.HandleAsync(request, ct)).ToMinimalApiResult()
             )
-            .Withvalidation<RegisterUserRequest>()
+            .WithValidation<RegisterUserRequest>()
             .Produces<RegisterUserResponse>();
 
         group
@@ -30,7 +30,7 @@ public static class RegisterEndpoint
                     [FromBody] RegisterUserVerifyOtpRequest request,
                     [FromServices] RegisterUserVerifyOtpHandler handler,
                     IWebHostEnvironment env,
-                HttpResponse httpResponse,
+                    HttpResponse httpResponse,
                     CancellationToken cancellationToken
                 ) =>
                 {
@@ -42,7 +42,7 @@ public static class RegisterEndpoint
                     return Results.NoContent();
                 }
             )
-            .Withvalidation<RegisterUserVerifyOtpRequest>()
+            .WithValidation<RegisterUserVerifyOtpRequest>()
             .Produces(204);
     }
 }

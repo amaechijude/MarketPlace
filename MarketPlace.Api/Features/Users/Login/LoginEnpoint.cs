@@ -31,7 +31,7 @@ public static class LoginEnpoint
                     return Results.NoContent();
                 }
             )
-            .Withvalidation<EmailLoginRequest>()
+            .WithValidation<EmailLoginRequest>()
             .Produces(204)
             .Produces<EmailLoginResponse>(202);
 
@@ -61,8 +61,8 @@ public static class LoginEnpoint
                     [FromBody] GoogleLoginRequest request,
                     [FromServices] GoogleLoginHandler handler,
                     IWebHostEnvironment env,
-                HttpResponse httpResponse,
-                CancellationToken cancellationToken
+                    HttpResponse httpResponse,
+                    CancellationToken cancellationToken
                 ) =>
                 {
                     LoginResponse response = await handler.HandleAsync(request, cancellationToken);
@@ -73,7 +73,7 @@ public static class LoginEnpoint
                     return Results.NoContent();
                 }
             )
-            .Withvalidation<GoogleLoginRequest>()
+            .WithValidation<GoogleLoginRequest>()
             .Produces(204);
     }
 }

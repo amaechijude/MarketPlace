@@ -18,10 +18,16 @@ public sealed class Product
     public required string[] ImageUrlsArray { get; set; } = [];
     public required string[] ImageFileKeysArray { get; set; } = [];
 
+    // Audit
+    public int StockQuantity { get; set; }
+
     // query filters
     public required bool IsPublished { get; set; }
     public Category Category { get; set; } = null!;
     public required int CategoryId { get; set; }
 
     public required Guid CreatedBy { get; init; }
+
+    // rel
+    public ICollection<CartItem> CartItems { get; set; } = [];
 }

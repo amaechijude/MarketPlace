@@ -51,7 +51,6 @@ public sealed class ListProductHandler(AppDbContext context) : IRequestHandler
             NextCursor: nextCursor,
             HasNextPage: hasNextPage
         );
-        _ = response.Count;
         return ApiResponse<CursorPagedResponse<ListProductResponse>>.Success(response);
     }
 }

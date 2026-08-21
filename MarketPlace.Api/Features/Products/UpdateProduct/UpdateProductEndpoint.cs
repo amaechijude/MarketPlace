@@ -30,7 +30,7 @@ public static class UpdateProductEndpoint
                 }
             )
             .RequireAuthorization()
-            .Withvalidation<UpdateProductRequest>()
+            .WithValidation<UpdateProductRequest>()
             .Produces(201);
 
         group
@@ -54,7 +54,7 @@ public static class UpdateProductEndpoint
                 }
             )
             .RequireAuthorization()
-            .Withvalidation<UpdateProductImagesRequest>()
+            .WithValidation<UpdateProductImagesRequest>()
             .Produces(201);
     }
 }

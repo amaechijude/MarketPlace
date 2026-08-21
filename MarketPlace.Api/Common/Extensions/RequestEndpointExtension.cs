@@ -1,8 +1,10 @@
 using System.Reflection;
+using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace MarketPlace.Api.Common.Extensions;
 
+[UsedImplicitly(ImplicitUseTargetFlags.WithInheritors)]
 public interface IRequestEndpoints
 {
     void Map(IEndpointRouteBuilder builder);

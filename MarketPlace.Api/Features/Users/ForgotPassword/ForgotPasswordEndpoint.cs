@@ -20,7 +20,7 @@ public static class ForgotPasswordEndpoint
                     CancellationToken ct
                 ) => (await handler.HandleAsync(request, ct)).ToMinimalApiResult()
             )
-            .Withvalidation<ForgotPasswordRequest>()
+            .WithValidation<ForgotPasswordRequest>()
             .Produces<ForgotPasswordResponse>();
 
         group
@@ -43,7 +43,7 @@ public static class ForgotPasswordEndpoint
                     return Results.NoContent();
                 }
             )
-            .Withvalidation<ResetPasswordRequest>()
+            .WithValidation<ResetPasswordRequest>()
             .Produces(204);
     }
 }

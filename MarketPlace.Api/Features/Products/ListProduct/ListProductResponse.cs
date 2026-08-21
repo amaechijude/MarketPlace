@@ -1,3 +1,5 @@
+using JetBrains.Annotations;
+
 namespace MarketPlace.Api.Features.Products.ListProduct;
 
 public sealed record ListProductResponse(
@@ -8,5 +10,6 @@ public sealed record ListProductResponse(
     string CategorySlug
 )
 {
+    [UsedImplicitly]
     public long PriceInNaira => PriceInKobo / 100;
 };
