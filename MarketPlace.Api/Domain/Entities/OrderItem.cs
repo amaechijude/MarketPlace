@@ -9,9 +9,10 @@ public sealed class OrderItem
     public required string Sku { get; init; }
     public required int Quantity { get; init; }
     public required long UnitPriceInKobo { get; init; }
+    public required DateTimeOffset CreatedAt { get; init; }
 
     // Navigation
-    public Guid OrderId { get; set; }
+    public required Guid OrderId { get; init; }
     public Order Order { get; private set; } = null!;
 
     public required Guid ProductId { get; init; }

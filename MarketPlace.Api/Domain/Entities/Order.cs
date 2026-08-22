@@ -9,9 +9,9 @@ public sealed class Order
     public OrderStatus Status { get; private set; } = OrderStatus.Pending;
 
     // price snapshot
-    public required long SubtotalInKobo { get; init; }
+    public long SubtotalInKobo { get; init; }
     public required long ShippingFeeInKobo { get; init; }
-    public required long TotalInKobo { get; init; }
+    public long TotalInKobo { get; private set; }
 
     // snapshot of shipping address at time of order
     public ShippingAddressSnapshot ShippingAddressSnapshot { get; private init; } = null!;
@@ -24,6 +24,13 @@ public sealed class Order
     public User? User { get; set; }
     public ICollection<OrderItem> OrderItems { get; private init; } = [];
 
-    public required string TrackingNumber { get; init; } = string.Empty;
-    public required string PaymentReference { get; init; } = null!;
+    public string TrackingNumber { get; private set; } = string.Empty;
+    public required string PaymentReference { get; init; }
+
+    public long AttachSubTotal(long subtotalAmountInKobo)
+    {
+        var sum = subtotalAmountInKobo + ShippingFeeInKobo;
+        TotalInKobo = sum;
+        return sum;
+    }
 }

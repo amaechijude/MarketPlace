@@ -67,6 +67,9 @@ public sealed class ApiResponse<T>
     public static ApiResponse<T> InternalServerError(string message) =>
         Failure(new ApiError(message, StatusCodes.Status500InternalServerError));
 
+    public static ApiResponse<T> UpstreamServerError(string message) =>
+        Failure(new ApiError(message, StatusCodes.Status503ServiceUnavailable));
+
     private record struct ApiError(
         string ErrorDetail,
         int StatusCode,

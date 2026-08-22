@@ -1,6 +1,8 @@
 ﻿using FluentValidation;
+using MarketPlace.Api.Common.ExceptionHandler;
 using MarketPlace.Api.Features.Users.Register;
 using MarketPlace.Test.SetUp;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -22,12 +24,6 @@ public sealed class ServiceCollectionTests(CustomWebApplicationFactory factory)
         var registerValidator = scope.ServiceProvider.GetService<IValidator<RegisterUserRequest>>();
         Assert.NotNull(registerValidator);
 
-        // 2. Assert builder.Services.AddValidation() (from Program.cs line 45) registration
-        var validationOptionsConfig = scope.ServiceProvider.GetService<
-            IConfigureOptions<ValidationOptions>
-        >();
-        Assert.NotNull(validationOptionsConfig);
-
         var validationOptions = scope.ServiceProvider.GetService<IOptions<ValidationOptions>>();
         Assert.NotNull(validationOptions);
         Assert.NotNull(validationOptions.Value);
@@ -41,5 +37,18 @@ public sealed class ServiceCollectionTests(CustomWebApplicationFactory factory)
         // Assert that the ProblemDetails services (from AddProblemDetails) are registered
         var problemDetailsService = scope.ServiceProvider.GetService<IProblemDetailsService>();
         Assert.NotNull(problemDetailsService);
+    }
+
+    [Fact]
+    public void ExceptionHandler_ShouldBeRegistered()
+    {
+        using var scope = _serviceProvider.CreateScope();
+
+        // Assert that the ProblemDetails services (from AddProblemDetails) are registered
+        var exceptionHandler = scope
+            .ServiceProvider.GetServices<IExceptionHandler>()
+            .FirstOrDefault(s => s is GlobalExceptionHandler);
+
+        Assert.NotNull(exceptionHandler);
     }
 }

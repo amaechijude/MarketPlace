@@ -1,18 +1,18 @@
 using MarketPlace.Api.Common.ApiResponseFactory;
 using MarketPlace.Api.Common.Extensions;
+using MarketPlace.Api.Common.Normalizer;
 using MarketPlace.Api.Domain.DatabaseContext;
 using MarketPlace.Api.Domain.Entities;
 using MarketPlace.Api.Domain.Entities.OwnedTypes;
 using MarketPlace.Api.Infrastucture.PaymentHandlers.Paystack;
 using Microsoft.EntityFrameworkCore;
-using Polly;
-using Polly.Retry;
 
 namespace MarketPlace.Api.Features.Checkout;
 
 public sealed class InitiateCheckoutHandler(
     AppDbContext context,
-    PaystackApiClient paystackApiClient
+    PaystackApiClient paystackApiClient,
+    TimeProvider timeProvider
 ) : IRequestHandler
 {
     private sealed class CheckoutValidationException(string message) : Exception(message);
@@ -23,9 +23,16 @@ public sealed class InitiateCheckoutHandler(
         CancellationToken cancellationToken
     )
     {
+        var shippingAddress = await GetShippingAddressAsync(
+            userId,
+            shippingAddressId,
+            cancellationToken
+        );
+        if (shippingAddress is { AddressSnapshot: null } or { FeeInKobo: <= 0 })
+            return ApiResponse<CheckoutResponse>.BadRequest("Invalid shipping address");
+
         var cart = await context
-            .Carts.AsNoTracking()
-            .Where(c => c.UserId == userId)
+            .Carts.Where(c => c.UserId == userId)
             .Select(c => new
             {
                 c.Id,
@@ -37,82 +44,85 @@ public sealed class InitiateCheckoutHandler(
         if (cart is null || !cart.CartItemExists)
             return ApiResponse<CheckoutResponse>.BadRequest("Cart Empty");
 
-        var (shippingAddress, shippingFee) = await GetShippingAddressAsync(
-            userId,
-            shippingAddressId,
-            cancellationToken
-        );
-        if (shippingAddress is null || shippingFee <= 0)
-            return ApiResponse<CheckoutResponse>.BadRequest("Invalid shipping address");
+        var cartItems = await context
+            .CartItems.Include(ci => ci.Product)
+            .Where(ci => ci.CartId == cart.Id)
+            .ToListAsync(cancellationToken);
 
-        var pipeline = new ResiliencePipelineBuilder()
-            .AddRetry(
-                new RetryStrategyOptions
-                {
-                    ShouldHandle = new PredicateBuilder().Handle<DbUpdateConcurrencyException>(),
-                    MaxRetryAttempts = 3,
-                    Delay = TimeSpan.FromMilliseconds(200),
-                    BackoffType = DelayBackoffType.Exponential,
-                    UseJitter = true,
-                }
-            )
-            .Build();
+        if (cartItems is { Count: 0 })
+            return ApiResponse<CheckoutResponse>.BadRequest("Empty cart");
 
-        Order order = null!;
-        long totalAmountInKobo = 0;
+        var orderItems = new List<OrderItem>(capacity: cartItems.Count);
+        var now = timeProvider.GetUtcNow();
+        var order = new Order
+        {
+            Id = Guid.CreateVersion7(),
+            CreatedAt = now,
+            UserId = userId,
+            PaymentReference = $"{Guid.NewGuid()}-{now:u}",
+            ShippingFeeInKobo = shippingAddress.FeeInKobo,
+        };
+        long subtotalAmountInKobo = 0;
 
         try
         {
-            await pipeline.ExecuteAsync(
-                async ct =>
-                {
-                    context.ChangeTracker.Clear();
+            foreach (var item in cartItems)
+            {
+                if (item.Quantity > item.Product.StockQuantity)
+                    throw new CheckoutValidationException(
+                        $"Insufficient stock for {item.Product.Name}"
+                    );
 
-                    var cartItems = await GetCartItemsAsync(cart.Id, ct);
-                    if (cartItems.Count == 0)
+                subtotalAmountInKobo += item.Quantity * item.Product.PriceInKobo;
+                orderItems.Add(
+                    new OrderItem
                     {
-                        throw new CheckoutValidationException("Empty cart");
+                        ProductName = item.Product.Name,
+                        Sku = item.Product.Name,
+                        Quantity = item.Quantity,
+                        UnitPriceInKobo = item.Product.PriceInKobo,
+                        OrderId = order.Id,
+                        ProductId = item.ProductId,
+                        CreatedAt = now,
                     }
+                );
+            }
 
-                    totalAmountInKobo = 0;
-                    List<OrderItem> orderItems = new(cartItems.Count);
+            var totalAmountInKobo = order.AttachSubTotal(subtotalAmountInKobo);
+            if (orderItems.Count <= 0 || order.TotalInKobo <= 0)
+                return ApiResponse<CheckoutResponse>.BadRequest("Empty order");
 
-                    foreach (var item in cartItems)
-                    {
-                        var variant = item.ProductVariant;
-                        var availableStock = variant.StockQuantity - variant.ReservedQuantity;
+            var paystackInitPayload = new PaystackInitPayload
+            {
+                Email = cart.UserEmail,
+                AmountInKobo = totalAmountInKobo.ToString(),
+                Reference = order.PaymentReference,
+            };
 
-                        if (item.Quantity > availableStock)
-                        {
-                            throw new CheckoutValidationException(
-                                $"Insufficient stock for product variant {variant.Sku}"
-                            );
-                        }
-
-                        // reserve inventory
-                        variant.ReserveStock(item.Quantity);
-                        totalAmountInKobo += variant.PriceInKobo * item.Quantity;
-
-                        orderItems.Add(
-                            OrderItem.Create(
-                                productVariantId: variant.Id,
-                                productName: variant.Product.Name,
-                                sku: variant.Sku,
-                                quantity: item.Quantity,
-                                unitPrice: variant.PriceInKobo
-                            )
-                        );
-                    }
-
-                    // Add shipping fee to total
-                    totalAmountInKobo += shippingFee;
-
-                    order = Order.Create(userId, orderItems, shippingAddress, shippingFee);
-                    context.Orders.Add(order);
-                    await context.SaveChangesAsync(ct);
-                },
+            var paystackResponse = await paystackApiClient.InitializeTransactionAsync(
+                paystackInitPayload,
                 cancellationToken
             );
+            if (paystackResponse is null)
+                return ApiResponse<CheckoutResponse>.BadRequest("Failed to initialize payment");
+
+            context.OrderItems.AddRange(orderItems);
+            context.Orders.Add(order);
+
+            await context.SaveChangesAsync(cancellationToken);
+
+            var checkoutResponse = new CheckoutResponse(
+                Reference: paystackResponse.Data.Reference,
+                AccessCode: paystackResponse.Data.AccessCode,
+                AuthorizationUrl: paystackResponse.Data.AuthorizationUrl
+            );
+
+            // clear cart
+            await context
+                .CartItems.Where(c => c.CartId == cart.Id)
+                .ExecuteDeleteAsync(cancellationToken);
+
+            return ApiResponse<CheckoutResponse>.Success(checkoutResponse);
         }
         catch (CheckoutValidationException ex)
         {
@@ -124,43 +134,9 @@ public sealed class InitiateCheckoutHandler(
                 "Too many concurrent checkout attempts. Please try again."
             );
         }
-
-        var paystackInitPayload = new PaystackInitPayload
-        {
-            Email = cart.UserEmail,
-            AmountInKobo = totalAmountInKobo.ToString(),
-            Reference = order.PaymentReference,
-        };
-
-        var paystackResponse = await paystackApiClient.InitializeTransactionAsync(
-            paystackInitPayload,
-            cancellationToken
-        );
-        if (paystackResponse is null)
-            return ApiResponse<CheckoutResponse>.BadRequest("Failed to initialize payment");
-
-        var checkoutResponse = new CheckoutResponse(
-            Reference: paystackResponse.Data.Reference,
-            AccessCode: paystackResponse.Data.AccessCode,
-            AuthorizationUrl: paystackResponse.Data.AuthorizationUrl
-        );
-
-        return ApiResponse<CheckoutResponse>.Success(checkoutResponse);
     }
 
-    private async Task<List<CartItem>> GetCartItemsAsync(
-        Guid cartId,
-        CancellationToken cancellationToken
-    )
-    {
-        return await context
-            .CartItems.Include(ci => ci.ProductVariant)
-            .ThenInclude(pv => pv.Product)
-            .Where(ci => ci.CartId == cartId && ci.ProductVariant.StockQuantity > 0)
-            .ToListAsync(cancellationToken);
-    }
-
-    private async Task<(ShippingAddressSnapshot?, int)> GetShippingAddressAsync(
+    private async Task<AddressResult> GetShippingAddressAsync(
         Guid userId,
         Guid shippingAddressId,
         CancellationToken cancellationToken
@@ -182,16 +158,37 @@ public sealed class InitiateCheckoutHandler(
             .FirstOrDefaultAsync(cancellationToken);
 
         if (address is null)
-            return (null, 0);
+            return AddressResult.Failed();
 
-        var state = address.State.Trim().ToLower();
+        var state = StateNameNormalizer.Normalize(address.State);
+
         var fee = await context
-            .ShippingFees.Where(f => f.StateName.ToLower() == state)
-            .Select(f => f.FeeInKobo)
+            .ShippingFees.Where(f => f.NormalizedStateName == state)
+            .Select(f => new { f.FeeInKobo })
             .FirstOrDefaultAsync(cancellationToken);
 
-        return (address, fee);
+        return fee is null ? AddressResult.Failed() : AddressResult.Succes(address, fee.FeeInKobo);
+    }
+
+    private sealed record AddressResult
+    {
+        public ShippingAddressSnapshot? AddressSnapshot { get; }
+        public int FeeInKobo { get; }
+
+        private AddressResult(ShippingAddressSnapshot address, int fee)
+        {
+            AddressSnapshot = address;
+            FeeInKobo = fee;
+        }
+
+        private AddressResult()
+        {
+            AddressSnapshot = null;
+        }
+
+        public static AddressResult Succes(ShippingAddressSnapshot address, int fee) =>
+            new(address, fee);
+
+        public static AddressResult Failed() => new();
     }
 }
-
-public sealed record CheckoutResponse(string Reference, string AccessCode, string AuthorizationUrl);
