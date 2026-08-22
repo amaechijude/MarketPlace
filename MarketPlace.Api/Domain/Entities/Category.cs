@@ -1,4 +1,3 @@
-using Amazon.S3.Model;
 using MarketPlace.Api.Common.Normalizer;
 
 namespace MarketPlace.Api.Domain.Entities;
@@ -14,7 +13,6 @@ public sealed class Category
 
     // Navigation
     public ICollection<Product> Products { get; private init; } = [];
-    public ICollection<Category> Categories { get; private init; } = [];
 
     public static Category Create(string name, DateTimeOffset createdAt) =>
         // Slugify the name

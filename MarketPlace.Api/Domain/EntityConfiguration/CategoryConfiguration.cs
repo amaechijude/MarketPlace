@@ -19,11 +19,10 @@ public sealed class CategoryConfiguration : IEntityTypeConfiguration<Category>
         builder.HasIndex(c => c.Slug).IsUnique();
 
         // rel
-        builder
-            .HasMany(c => c.Categories)
-            .WithMany(c => c.Categories)
-            .UsingEntity(e => e.ToTable("SubCategories"));
 
-        builder.HasMany(c => c.Products).WithOne(p => p.Category).HasForeignKey(p => p.CategoryId);
+        builder
+            .HasMany(c => c.Products)
+            .WithOne(p => p.Category)
+            .HasForeignKey(p => p.CategoryId);
     }
 }

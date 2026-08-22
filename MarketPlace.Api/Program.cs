@@ -1,4 +1,3 @@
-using System.Reflection;
 using DotNetEnv;
 using DotNetEnv.Configuration;
 using FluentValidation;
@@ -19,7 +18,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Scalar.AspNetCore;
 
-WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
 builder.Configuration.AddDotNetEnv(options: LoadOptions.TraversePath());
 
@@ -50,15 +49,12 @@ builder
     );
 
 // request and endpoints handlers
-Assembly assembly = typeof(Program).Assembly;
+var assembly = typeof(Program).Assembly;
 builder
     .Services.AddRequestEndpoints(assembly)
     .AddScopedRequestHandlers(assembly)
     .AddSingletonHandlers(assembly)
     .AddTransientHandlers(assembly);
-
-// Cache
-builder.Services.AddCacheInfrastructure(builder.Configuration);
 
 // Auth
 builder
@@ -74,10 +70,11 @@ builder.Services.AddAuthorization();
 
 // infra
 builder
-    .Services.AddDatabaseInfrastructure(builder.Configuration)
-    .AddEmailInfrastructure(builder.Environment)
-    .AddRateLimitingInfrastructure()
-    .AddMediaStorageInfrastructure(builder.Configuration)
+    .Services.AddCacheInfrastructure(builder.Configuration) //cache
+    .AddDatabaseInfrastructure(builder.Configuration) // db
+    .AddEmailInfrastructure(builder.Environment) // email
+    .AddRateLimitingInfrastructure() // ratelimit
+    .AddMediaStorageInfrastructure(builder.Configuration) // r2
     .AddPaymentHandlersInfrastructure(builder.Configuration);
 
 //hosted service

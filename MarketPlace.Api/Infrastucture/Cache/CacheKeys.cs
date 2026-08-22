@@ -7,4 +7,6 @@ public static class CacheKeys
     public const string ListOfShippingFees = "ShippingFee-List";
 
     public static string Product(Guid productId) => $"product-{productId}";
+
+    public static string Address(Guid userId) => $"address-{userId}";
 }

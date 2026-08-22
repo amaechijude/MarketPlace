@@ -12,9 +12,10 @@ public sealed class User
     public bool EmailConfrimed { get; private set; }
     public DateTimeOffset CreatedOn { get; private init; }
     public Guid Cartid { get; set; }
-    public Cart? Cart { get; set; }
+    public Cart? Cart { get; set; } = null;
 
     public ICollection<Role> Roles { get; set; } = [];
+    public ICollection<ShippingAddress> ShippingAddresses { get; set; } = [];
 
     public static User Create(string email, DateTimeOffset createdOn)
     {

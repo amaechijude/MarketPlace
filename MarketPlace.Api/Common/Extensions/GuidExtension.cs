@@ -5,6 +5,7 @@
         extension(Guid guid)
         {
             public bool IsEmpty => guid == Guid.Empty;
+            public bool IsNotEmpty => guid != Guid.Empty;
         }
     }
 }

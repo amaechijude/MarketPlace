@@ -20,7 +20,7 @@ public static class DeleteProductEndpoint
                 ) =>
                 {
                     var userId = user.UserId;
-                    return userId.IsEmpty()
+                    return userId.IsEmpty
                         ? Results.Problem(statusCode: StatusCodes.Status401Unauthorized)
                         : (await handler.HandleAsync(userId, productId, ct)).ToMinimalApiResult();
                 }

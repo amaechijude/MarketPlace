@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using FluentValidation;
+using JetBrains.Annotations;
 using MarketPlace.Api.Common.Extensions;
 using MarketPlace.Api.Common.ValidationAttributes;
 
@@ -20,11 +21,12 @@ public sealed record ResetPasswordRequest
     public string ConfirmPassword { get; init; } = string.Empty;
 }
 
+[UsedImplicitly]
 public sealed class ResetPasswordRequestValidator : AbstractValidator<ResetPasswordRequest>
 {
     public ResetPasswordRequestValidator()
     {
-        RuleFor(x => x.OtpId).Must(m => !m.IsEmpty());
+        RuleFor(x => x.OtpId).Must(m => m.IsNotEmpty);
 
         RuleFor(x => x.OtpInput)
             .Cascade(CascadeMode.Stop)

@@ -27,7 +27,7 @@ public sealed class ResetPasswordHandler(
             cancellationToken
         );
 
-        if (!result.IsValid || result.UserId.IsEmpty())
+        if (!result.IsValid || result.UserId.IsEmpty)
             return LoginResponse.Fail();
 
         var user = await context.Users.FindAsync(

@@ -20,7 +20,7 @@ public static class CreateProductEndpoint
                 ) =>
                 {
                     var (userId, roles) = user.UserIdAndRole;
-                    if (userId.IsEmpty())
+                    if (userId.IsEmpty)
                         return Results.Problem(statusCode: 401);
 
                     return (

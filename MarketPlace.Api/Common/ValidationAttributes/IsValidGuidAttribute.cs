@@ -13,7 +13,7 @@ public class IsValidGuidAttribute : ValidationAttribute
 
     protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
     {
-        if (value is not Guid guid || guid.IsEmpty())
+        if (value is not Guid guid || guid.IsEmpty)
             return new ValidationResult(FormatErrorMessage(validationContext.DisplayName));
 
         return ValidationResult.Success;

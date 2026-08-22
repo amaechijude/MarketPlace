@@ -22,7 +22,7 @@ public static class UpdateProductEndpoint
                 {
                     var userId = user.UserId;
 
-                    return userId.IsEmpty()
+                    return userId.IsEmpty
                         ? Results.Problem(statusCode: StatusCodes.Status401Unauthorized)
                         : (
                             await handler.HandleAsync(productId, request, userId, ct)
@@ -46,7 +46,7 @@ public static class UpdateProductEndpoint
                 {
                     var userId = user.UserId;
 
-                    return userId.IsEmpty()
+                    return userId.IsEmpty
                         ? Results.Problem(statusCode: StatusCodes.Status401Unauthorized)
                         : (
                             await handler.HandleAsync(productId, request, userId, ct)
