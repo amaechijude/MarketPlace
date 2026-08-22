@@ -45,7 +45,7 @@ builder
         {
             ctx.ProblemDetails.Instance =
                 $"{ctx.HttpContext.Request.Method} -> {ctx.HttpContext.Request.Path}";
-            ctx.ProblemDetails.Extensions["timeStamp"] = DateTimeOffset.UtcNow.ToString("R");
+            ctx.ProblemDetails.Extensions["timeStamp"] = DateTimeOffset.UtcNow;
         }
     );
 
