@@ -23,5 +23,6 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .WithOne(s => s.User)
             .HasForeignKey(s => s.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+
     }
 }

@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MarketPlace.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260821214209_Init")]
+    [Migration("20260822165227_Init")]
     partial class Init
     {
         /// <inheritdoc />
@@ -35,6 +35,9 @@ namespace MarketPlace.Api.Migrations
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
 
                     b.ToTable("Carts", (string)null);
                 });
@@ -96,6 +99,91 @@ namespace MarketPlace.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("Categories", (string)null);
+                });
+
+            modelBuilder.Entity("MarketPlace.Api.Domain.Entities.Order", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("PaymentReference")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<long>("ShippingFeeInKobo")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<long>("SubtotalInKobo")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TotalInKobo")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("TrackingNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Orders", (string)null);
+                });
+
+            modelBuilder.Entity("MarketPlace.Api.Domain.Entities.OrderItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("OrderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProductId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Sku")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<long>("UnitPriceInKobo")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("OrderItems", (string)null);
                 });
 
             modelBuilder.Entity("MarketPlace.Api.Domain.Entities.Product", b =>
@@ -286,13 +374,50 @@ namespace MarketPlace.Api.Migrations
                     b.ToTable("ShippingAddresses", (string)null);
                 });
 
+            modelBuilder.Entity("MarketPlace.Api.Domain.Entities.ShippingFee", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("FeeInKobo")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("LastUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("LastUpdatedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("NormalizedStateName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("StateName")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedStateName")
+                        .IsUnique();
+
+                    b.ToTable("ShippingFees", (string)null);
+                });
+
             modelBuilder.Entity("MarketPlace.Api.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("Cartid")
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset>("CreatedOn")
@@ -318,9 +443,6 @@ namespace MarketPlace.Api.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Cartid")
-                        .IsUnique();
-
                     b.HasIndex("NormalizedEmail")
                         .IsUnique();
 
@@ -342,6 +464,17 @@ namespace MarketPlace.Api.Migrations
                     b.ToTable("UserRoles", (string)null);
                 });
 
+            modelBuilder.Entity("MarketPlace.Api.Domain.Entities.Cart", b =>
+                {
+                    b.HasOne("MarketPlace.Api.Domain.Entities.User", "User")
+                        .WithOne("Cart")
+                        .HasForeignKey("MarketPlace.Api.Domain.Entities.Cart", "UserId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("MarketPlace.Api.Domain.Entities.CartItem", b =>
                 {
                     b.HasOne("MarketPlace.Api.Domain.Entities.Cart", "Cart")
@@ -357,6 +490,98 @@ namespace MarketPlace.Api.Migrations
                         .IsRequired();
 
                     b.Navigation("Cart");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("MarketPlace.Api.Domain.Entities.Order", b =>
+                {
+                    b.HasOne("MarketPlace.Api.Domain.Entities.User", "User")
+                        .WithMany("Orders")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .IsRequired();
+
+                    b.OwnsOne("MarketPlace.Api.Domain.Entities.OwnedTypes.ShippingAddressSnapshot", "ShippingAddressSnapshot", b1 =>
+                        {
+                            b1.Property<Guid>("OrderId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Address")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("ShippingAddress");
+
+                            b1.Property<string>("City")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("ShippingCity");
+
+                            b1.Property<string>("FirstName")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("ShippingFirstName");
+
+                            b1.Property<Guid>("Id")
+                                .HasColumnType("uuid")
+                                .HasColumnName("ShippingAddressId");
+
+                            b1.Property<string>("Landmark")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("ShippingLandmark");
+
+                            b1.Property<string>("LastName")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("ShippingLastName");
+
+                            b1.Property<string>("Phone")
+                                .IsRequired()
+                                .HasMaxLength(16)
+                                .HasColumnType("character varying(16)")
+                                .HasColumnName("ShippingPhone");
+
+                            b1.Property<string>("State")
+                                .IsRequired()
+                                .HasMaxLength(50)
+                                .HasColumnType("character varying(50)")
+                                .HasColumnName("ShippingState");
+
+                            b1.HasKey("OrderId");
+
+                            b1.ToTable("Orders");
+
+                            b1.WithOwner()
+                                .HasForeignKey("OrderId");
+                        });
+
+                    b.Navigation("ShippingAddressSnapshot")
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MarketPlace.Api.Domain.Entities.OrderItem", b =>
+                {
+                    b.HasOne("MarketPlace.Api.Domain.Entities.Order", "Order")
+                        .WithMany("OrderItems")
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MarketPlace.Api.Domain.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
 
                     b.Navigation("Product");
                 });
@@ -383,17 +608,6 @@ namespace MarketPlace.Api.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("MarketPlace.Api.Domain.Entities.User", b =>
-                {
-                    b.HasOne("MarketPlace.Api.Domain.Entities.Cart", "Cart")
-                        .WithOne("User")
-                        .HasForeignKey("MarketPlace.Api.Domain.Entities.User", "Cartid")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Cart");
-                });
-
             modelBuilder.Entity("RoleUser", b =>
                 {
                     b.HasOne("MarketPlace.Api.Domain.Entities.Role", null)
@@ -412,14 +626,16 @@ namespace MarketPlace.Api.Migrations
             modelBuilder.Entity("MarketPlace.Api.Domain.Entities.Cart", b =>
                 {
                     b.Navigation("CartItems");
-
-                    b.Navigation("User")
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("MarketPlace.Api.Domain.Entities.Category", b =>
                 {
                     b.Navigation("Products");
+                });
+
+            modelBuilder.Entity("MarketPlace.Api.Domain.Entities.Order", b =>
+                {
+                    b.Navigation("OrderItems");
                 });
 
             modelBuilder.Entity("MarketPlace.Api.Domain.Entities.Product", b =>
@@ -429,6 +645,10 @@ namespace MarketPlace.Api.Migrations
 
             modelBuilder.Entity("MarketPlace.Api.Domain.Entities.User", b =>
                 {
+                    b.Navigation("Cart");
+
+                    b.Navigation("Orders");
+
                     b.Navigation("ShippingAddresses");
                 });
 #pragma warning restore 612, 618

@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
@@ -14,18 +13,6 @@ namespace MarketPlace.Api.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
-                name: "Carts",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    UserId = table.Column<Guid>(type: "uuid", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Carts", x => x.Id);
-                });
-
             migrationBuilder.CreateTable(
                 name: "Categories",
                 columns: table => new
@@ -58,6 +45,25 @@ namespace MarketPlace.Api.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ShippingFees",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    StateName = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    NormalizedStateName = table.Column<string>(type: "text", nullable: false),
+                    FeeInKobo = table.Column<int>(type: "integer", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastUpdatedById = table.Column<Guid>(type: "uuid", nullable: true),
+                    LastUpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ShippingFees", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
@@ -66,18 +72,11 @@ namespace MarketPlace.Api.Migrations
                     PasswordHash = table.Column<string>(type: "character varying(2256)", maxLength: 2256, nullable: false),
                     NormalizedEmail = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     EmailConfrimed = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedOn = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    Cartid = table.Column<Guid>(type: "uuid", nullable: false)
+                    CreatedOn = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Users_Carts_Cartid",
-                        column: x => x.Cartid,
-                        principalTable: "Carts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -110,6 +109,58 @@ namespace MarketPlace.Api.Migrations
                         principalTable: "Categories",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Carts",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Carts", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Carts_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Orders",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Status = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
+                    SubtotalInKobo = table.Column<long>(type: "bigint", nullable: false),
+                    ShippingFeeInKobo = table.Column<long>(type: "bigint", nullable: false),
+                    TotalInKobo = table.Column<long>(type: "bigint", nullable: false),
+                    ShippingAddressId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ShippingFirstName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ShippingLastName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ShippingPhone = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false),
+                    ShippingAddress = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ShippingLandmark = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ShippingCity = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    ShippingState = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TrackingNumber = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    PaymentReference = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Orders", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Orders_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -190,9 +241,39 @@ namespace MarketPlace.Api.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
+            migrationBuilder.CreateTable(
+                name: "OrderItems",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
+                    Sku = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    Quantity = table.Column<int>(type: "integer", nullable: false),
+                    UnitPriceInKobo = table.Column<long>(type: "bigint", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    OrderId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OrderItems", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_OrderItems_Orders_OrderId",
+                        column: x => x.OrderId,
+                        principalTable: "Orders",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_OrderItems_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
             migrationBuilder.InsertData(
                 table: "Roles",
-                columns: new[] { "Id", "CreateAt", "CreatedBy", "Name" },
+                columns: ["Id", "CreateAt", "CreatedBy", "Name"],
                 values: new object[,]
                 {
                     { new Guid("019d884e-2c65-721d-a025-4124c7208592"), new DateTimeOffset(new DateTime(2026, 4, 13, 19, 32, 6, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), new Guid("00000000-0000-0000-0000-000000000000"), "SuperAdmin" },
@@ -213,10 +294,31 @@ namespace MarketPlace.Api.Migrations
                 column: "ProductId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Carts_UserId",
+                table: "Carts",
+                column: "UserId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Categories_Slug",
                 table: "Categories",
                 column: "Slug",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderItems_OrderId",
+                table: "OrderItems",
+                column: "OrderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_OrderItems_ProductId",
+                table: "OrderItems",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Orders_UserId",
+                table: "Orders",
+                column: "UserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Products_CategoryId",
@@ -229,15 +331,15 @@ namespace MarketPlace.Api.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ShippingFees_NormalizedStateName",
+                table: "ShippingFees",
+                column: "NormalizedStateName",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UserRoles_UsersId",
                 table: "UserRoles",
                 column: "UsersId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Users_Cartid",
-                table: "Users",
-                column: "Cartid",
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_NormalizedEmail",
@@ -253,10 +355,22 @@ namespace MarketPlace.Api.Migrations
                 name: "CartItems");
 
             migrationBuilder.DropTable(
+                name: "OrderItems");
+
+            migrationBuilder.DropTable(
                 name: "ShippingAddresses");
 
             migrationBuilder.DropTable(
+                name: "ShippingFees");
+
+            migrationBuilder.DropTable(
                 name: "UserRoles");
+
+            migrationBuilder.DropTable(
+                name: "Carts");
+
+            migrationBuilder.DropTable(
+                name: "Orders");
 
             migrationBuilder.DropTable(
                 name: "Products");
@@ -269,9 +383,6 @@ namespace MarketPlace.Api.Migrations
 
             migrationBuilder.DropTable(
                 name: "Categories");
-
-            migrationBuilder.DropTable(
-                name: "Carts");
         }
     }
 }

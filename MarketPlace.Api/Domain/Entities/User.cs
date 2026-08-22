@@ -11,7 +11,7 @@ public sealed class User
     public string NormalizedEmail { get; private init; } = string.Empty;
     public bool EmailConfrimed { get; private set; }
     public DateTimeOffset CreatedOn { get; private init; }
-    public Guid Cartid { get; set; }
+
     public Cart? Cart { get; set; } = null;
 
     public ICollection<Role> Roles { get; set; } = [];

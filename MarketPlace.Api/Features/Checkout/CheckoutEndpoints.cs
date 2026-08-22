@@ -13,26 +13,30 @@ public sealed class CheckoutEndpoints : IRequestEndpoints
 
         checkoutGroup
             .MapPost(
-                "/initiate/{addressId:guid}",
+                "initiate",
                 async (
-                    [FromRoute] Guid addressId,
+                    [FromBody] CheckoutRequest req,
                     [FromServices] InitiateCheckoutHandler handler,
                     ClaimsPrincipal user,
                     CancellationToken ct
-                ) => (await handler.HandleAsync(addressId, user.UserId, ct)).ToMinimalApiResult()
+                ) =>
+                    (await handler.HandleAsync(req.AdrressId, user.UserId, ct)).ToMinimalApiResult()
             )
-            .ProducesResponsesWithProblem<CheckoutResponse>([400]);
+            .WithValidation<ValidateCheckoutRequest>()
+            .Produces<CheckoutResponse>();
 
         checkoutGroup
             .MapPost(
                 "/validate/{reference}",
                 async (
-                    [FromRoute] string reference,
+                    [FromBody] ValidateCheckoutRequest req,
                     [FromServices] ValidateCheckoutHandler handler,
                     ClaimsPrincipal user,
                     CancellationToken ct
-                ) => (await handler.HandleAsync(user.UserId, reference, ct)).ToMinimalApiResult()
+                ) =>
+                    (await handler.HandleAsync(user.UserId, req.Reference, ct)).ToMinimalApiResult()
             )
-            .ProducesResponsesWithProblem<ValidateCheckoutResponse>([503, 400]);
+            .WithValidation<ValidateCheckoutRequest>()
+            .Produces<ValidateCheckoutResponse>();
     }
 }
