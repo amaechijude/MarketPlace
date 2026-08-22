@@ -8,7 +8,7 @@ public sealed class ApiResponse<T>
     public bool IsNoContent { get; }
     public bool IsCreated { get; }
     public T? Data { get; }
-    public ProblemDetails Error { get; } = new ProblemDetails { Status = 400 };
+    public ProblemDetails Error { get; } = new() { Status = 400 };
 
     private ApiResponse(T data)
     {

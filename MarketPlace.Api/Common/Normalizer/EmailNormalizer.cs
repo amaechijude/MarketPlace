@@ -10,13 +10,11 @@ public static class EmailNormalizer
         if (email.Contains(' '))
             throw new EmailWhiteSpaceException();
 
-        if (!email.Contains('@'))
-            throw new EmailWhiteSpaceException("Invaliid Email");
-
-
-        return email.ToLowerInvariant();
-
+        return !email.Contains('@')
+            ? throw new EmailWhiteSpaceException("Invaliid Email")
+            : email.ToLowerInvariant();
     }
 }
 
-public sealed class EmailWhiteSpaceException(string message = "Email cannot contain whitespace") : CustomAppExceptions(message);
+public sealed class EmailWhiteSpaceException(string message = "Email cannot contain whitespace")
+    : CustomAppExceptions(message);

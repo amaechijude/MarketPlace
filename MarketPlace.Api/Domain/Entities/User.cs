@@ -16,6 +16,7 @@ public sealed class User
 
     public ICollection<Role> Roles { get; set; } = [];
     public ICollection<ShippingAddress> ShippingAddresses { get; set; } = [];
+    public ICollection<Order> Orders { get; set; } = [];
 
     public static User Create(string email, DateTimeOffset createdOn)
     {

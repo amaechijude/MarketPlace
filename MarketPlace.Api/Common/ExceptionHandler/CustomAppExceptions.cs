@@ -2,7 +2,10 @@
 
 namespace MarketPlace.Api.Common.ExceptionHandler;
 
-public abstract class CustomAppExceptions(string message, HttpStatusCode httpStatusCode = HttpStatusCode.BadRequest) : Exception(message)
+public abstract class CustomAppExceptions(
+    string message,
+    HttpStatusCode httpStatusCode = HttpStatusCode.BadRequest
+) : Exception(message)
 {
-    public int StatusCode { get; } = (int)httpStatusCode;
+    public int StatusCode => (int)httpStatusCode;
 }
