@@ -6,6 +6,7 @@ using MarketPlace.Api.Common.Extensions;
 using MarketPlace.Api.Domain.Entities;
 using MarketPlace.Api.Features.Users.Login;
 using MarketPlace.Api.Features.Users.Register;
+using MarketPlace.Api.Features.Webhooks;
 using MarketPlace.Api.Infrastucture.Auth;
 using MarketPlace.Api.Infrastucture.Cache;
 using MarketPlace.Api.Infrastucture.Database;
@@ -55,6 +56,9 @@ builder
     .AddScopedRequestHandlers(assembly)
     .AddSingletonHandlers(assembly)
     .AddTransientHandlers(assembly);
+
+// webhook keyed
+builder.Services.AddWebHookKeyedDispatchers();
 
 // Auth
 builder

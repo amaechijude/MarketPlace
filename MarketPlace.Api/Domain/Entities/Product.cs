@@ -30,4 +30,9 @@ public sealed class Product
 
     // rel
     public ICollection<CartItem> CartItems { get; set; } = [];
+
+    public void ConfirmStockReservation(int itemQuantity)
+    {
+        throw new NotImplementedException();
+    }
 }
