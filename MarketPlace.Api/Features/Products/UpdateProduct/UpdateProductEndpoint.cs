@@ -38,7 +38,7 @@ public static class UpdateProductEndpoint
                 "{productId:guid}/images",
                 async (
                     [FromRoute] Guid productId,
-                    [FromBody] UpdateProductImagesRequest request,
+                    [FromForm] UpdateProductImagesRequest request,
                     [FromServices] UpdateProductImageHandler handler,
                     ClaimsPrincipal user,
                     CancellationToken ct

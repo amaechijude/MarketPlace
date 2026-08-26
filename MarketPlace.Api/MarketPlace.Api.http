@@ -1,6 +1,7 @@
 @MarketPlace.Api_HostAddress = http://localhost:5177
 
-GET {{MarketPlace.Api_HostAddress}}/hello
+
+GET {{MarketPlace.Api_HostAddress}}/http
 Accept: application/json
 
 ###
