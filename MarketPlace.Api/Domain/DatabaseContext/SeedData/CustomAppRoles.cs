@@ -1,5 +1,4 @@
 using MarketPlace.Api.Common.Extensions;
-using MarketPlace.Api.Common.Normalizer;
 using MarketPlace.Api.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,17 +17,13 @@ public static class CustomAppRoles
         }
         else
         {
-            var normalisedNames = AllRolesCollection
-                .Select(RoleNameNormalizer.Normalize)
-                .ToHashSet();
-
             var existingRoleNames = context
                 .Set<Role>()
-                .Where(r => normalisedNames.Contains(r.Name))
+                .Where(r => AllRolesCollection.Contains(r.Name))
                 .Select(s => s.Name)
                 .ToList();
 
-            var rolesToadd = normalisedNames.Where(existingRoleNames.DoesNotContain).ToList();
+            var rolesToadd = AllRolesCollection.Where(existingRoleNames.DoesNotContain).ToList();
             if (rolesToadd is not { Count: > 0 })
                 return;
             {
@@ -49,17 +44,13 @@ public static class CustomAppRoles
         }
         else
         {
-            var normalisedNames = AllRolesCollection
-                .Select(RoleNameNormalizer.Normalize)
-                .ToHashSet();
-
             var existingRoleNames = await context
                 .Set<Role>()
-                .Where(r => normalisedNames.Contains(r.Name))
+                .Where(r => AllRolesCollection.Contains(r.Name))
                 .Select(s => s.Name)
                 .ToListAsync(ct);
 
-            var rolesToadd = normalisedNames.Where(existingRoleNames.DoesNotContain).ToList();
+            var rolesToadd = AllRolesCollection.Where(existingRoleNames.DoesNotContain).ToList();
             if (rolesToadd is { Count: > 0 })
             {
                 await context

@@ -1,5 +1,3 @@
-using MarketPlace.Api.Common.Normalizer;
-
 namespace MarketPlace.Api.Domain.Entities;
 
 public sealed class Role
@@ -15,7 +13,7 @@ public sealed class Role
         return new Role
         {
             Id = Guid.CreateVersion7(),
-            Name = RoleNameNormalizer.Normalize(name),
+            Name = name,
             CreatedBy = createdBy,
             CreateAt = DateTimeOffset.UtcNow,
         };

@@ -54,17 +54,20 @@ public sealed class GoogleLoginHandler(
             .Where(u => u.NormalizedEmail == normalisedEmail)
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (user is null)
+        switch (user)
         {
-            // Brand new user
-            user = User.Create(payload, timeProvider.GetUtcNow());
-            context.Users.Add(user);
-            await context.SaveChangesAsync(cancellationToken);
-            return user;
+            case null:
+                // Brand new user
+                user = User.Create(payload, timeProvider.GetUtcNow());
+                context.Users.Add(user);
+                await context.SaveChangesAsync(cancellationToken);
+
+                return user;
+            case { EmailConfrimed: true }:
+                return user;
         }
 
-        if (!user.EmailConfrimed)
-            user.MarkEmailConfirmed();
+        user.MarkEmailConfirmed();
         await context.SaveChangesAsync(cancellationToken);
 
         return user;
