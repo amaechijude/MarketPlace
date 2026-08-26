@@ -80,7 +80,7 @@ public sealed class CreateProductHandler(
             ImageFileKeysArray = [.. upload.Select(s => s.FileKey)],
             IsPublished = request.IsPublished,
             CategoryId = categoryId,
-            CreatedBy = userId,
+            VendorId = userId,
             BasePriceInKobo = request.Variants.Select(s => s.PriceInKobo).First(),
         };
 

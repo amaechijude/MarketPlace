@@ -1,4 +1,5 @@
 ﻿using JetBrains.Annotations;
+using MarketPlace.Api.Domain.DatabaseContext.SeedData;
 using MarketPlace.Api.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,4 +25,21 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        optionsBuilder.UseAsyncSeeding(SeedAsync).UseSeeding(Seed);
+    }
+
+    private static Action<DbContext, bool> Seed =>
+        (context, _) =>
+        {
+            CustomAppRoles.Seed(context);
+        };
+
+    private static Func<DbContext, bool, CancellationToken, Task> SeedAsync =>
+        async (context, _, ct) =>
+        {
+            await CustomAppRoles.SeedAsync(context, ct);
+        };
 }

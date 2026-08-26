@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using MarketPlace.Api.Common.ApiResponseFactory;
 using MarketPlace.Api.Common.Extensions;
-using MarketPlace.Api.Domain.SeedData;
+using MarketPlace.Api.Domain.DatabaseContext.SeedData;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MarketPlace.Api.Features.ShippingFees;

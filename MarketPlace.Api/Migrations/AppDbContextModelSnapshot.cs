@@ -203,9 +203,6 @@ namespace MarketPlace.Api.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uuid");
-
                     b.PrimitiveCollection<string[]>("ImageFileKeysArray")
                         .IsRequired()
                         .HasColumnType("text[]");
@@ -247,9 +244,14 @@ namespace MarketPlace.Api.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
+                    b.Property<Guid>("VendorId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
+
+                    b.HasIndex("VendorId");
 
                     b.ToTable("Products", (string)null);
                 });
@@ -320,43 +322,6 @@ namespace MarketPlace.Api.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Roles", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("019d884e-2c65-721d-a025-4124c7208592"),
-                            CreateAt = new DateTimeOffset(new DateTime(2026, 4, 13, 19, 32, 6, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            Name = "SuperAdmin"
-                        },
-                        new
-                        {
-                            Id = new Guid("019d884f-78f1-7b14-8b0b-79116ef03b82"),
-                            CreateAt = new DateTimeOffset(new DateTime(2026, 4, 13, 19, 32, 6, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            Name = "Admin"
-                        },
-                        new
-                        {
-                            Id = new Guid("019d884f-c93c-7500-996a-5af40b07445a"),
-                            CreateAt = new DateTimeOffset(new DateTime(2026, 4, 13, 19, 32, 6, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            Name = "Manager"
-                        },
-                        new
-                        {
-                            Id = new Guid("019d8850-60a5-7066-85b2-bc78d43f19d8"),
-                            CreateAt = new DateTimeOffset(new DateTime(2026, 4, 13, 19, 32, 6, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            Name = "Vendor"
-                        },
-                        new
-                        {
-                            Id = new Guid("019dc959-d027-7104-be07-754b1966c487"),
-                            CreateAt = new DateTimeOffset(new DateTime(2026, 4, 26, 15, 26, 37, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CreatedBy = new Guid("00000000-0000-0000-0000-000000000000"),
-                            Name = "ProductReviewModerator"
-                        });
                 });
 
             modelBuilder.Entity("MarketPlace.Api.Domain.Entities.ShippingAddress", b =>
@@ -492,6 +457,62 @@ namespace MarketPlace.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("MarketPlace.Api.Domain.Entities.Vendor", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BannerUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("DateJoined")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActivated")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("LastUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Location")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("LogoUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("Vendors", (string)null);
                 });
 
             modelBuilder.Entity("RoleUser", b =>
@@ -643,7 +664,15 @@ namespace MarketPlace.Api.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("MarketPlace.Api.Domain.Entities.Vendor", "Vendor")
+                        .WithMany("Products")
+                        .HasForeignKey("VendorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Category");
+
+                    b.Navigation("Vendor");
                 });
 
             modelBuilder.Entity("MarketPlace.Api.Domain.Entities.ProductVariant", b =>
@@ -662,6 +691,17 @@ namespace MarketPlace.Api.Migrations
                     b.HasOne("MarketPlace.Api.Domain.Entities.User", "User")
                         .WithMany("ShippingAddresses")
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MarketPlace.Api.Domain.Entities.Vendor", b =>
+                {
+                    b.HasOne("MarketPlace.Api.Domain.Entities.User", "User")
+                        .WithOne("Vendor")
+                        .HasForeignKey("MarketPlace.Api.Domain.Entities.Vendor", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -717,6 +757,13 @@ namespace MarketPlace.Api.Migrations
                     b.Navigation("Orders");
 
                     b.Navigation("ShippingAddresses");
+
+                    b.Navigation("Vendor");
+                });
+
+            modelBuilder.Entity("MarketPlace.Api.Domain.Entities.Vendor", b =>
+                {
+                    b.Navigation("Products");
                 });
 #pragma warning restore 612, 618
         }

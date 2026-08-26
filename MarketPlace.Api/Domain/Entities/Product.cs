@@ -18,7 +18,6 @@ public sealed class Product
 
     // audit
     public required DateTimeOffset CreatedAt { get; init; }
-    public required Guid CreatedBy { get; init; }
     public DateTimeOffset? LastUpdatedAt { get; set; }
     public Guid? LastUpdatedBy { get; set; }
 
@@ -28,6 +27,9 @@ public sealed class Product
     public required int CategoryId { get; set; }
 
     // rel
+    public required Guid VendorId { get; init; }
+    public Vendor Vendor { get; private set; } = null!;
+
     public ICollection<ProductVariant> Variants { get; set; } = [];
 
     public void AddVariant(CreateVariantRequest request, DateTimeOffset createdAt, Guid createdby)

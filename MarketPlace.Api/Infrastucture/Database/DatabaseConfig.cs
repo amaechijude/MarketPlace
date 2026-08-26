@@ -1,8 +1,8 @@
-﻿using MarketPlace.Api.Common.Extensions;
+﻿using System.ComponentModel.DataAnnotations;
+using MarketPlace.Api.Common.Extensions;
 using MarketPlace.Api.Domain.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using System.ComponentModel.DataAnnotations;
 
 namespace MarketPlace.Api.Infrastucture.Database;
 
@@ -16,8 +16,8 @@ public static class DatabaseConfig
         services
             .AddOptions<DatabaseOptions>()
             .Configure(options =>
-                options.ConnectionString = configuration.GetConnectionString("Database")
-                    ?? string.Empty
+                options.ConnectionString =
+                    configuration.GetConnectionString("Database") ?? string.Empty
             )
             .ValidateDataAnnotations()
             .Validate(v => ValidatePostgresqlConnString(v.ConnectionString))

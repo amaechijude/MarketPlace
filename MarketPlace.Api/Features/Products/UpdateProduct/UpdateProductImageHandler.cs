@@ -31,7 +31,7 @@ public sealed class UpdateProductImageHandler(
             return ApiResponse<int>.ValidationProblem(validationResult.ToDictionary());
 
         var product = await context
-            .Products.Where(p => p.Id == productId && p.CreatedBy == userId)
+            .Products.Where(p => p.Id == productId && p.VendorId == userId)
             .Select(s => new { s.ThumbnailFileKey, s.ImageFileKeysArray })
             .FirstOrDefaultAsync(cancellationToken);
 

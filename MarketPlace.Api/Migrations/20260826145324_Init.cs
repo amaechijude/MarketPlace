@@ -1,9 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
-
-#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
 
 namespace MarketPlace.Api.Migrations
 {
@@ -77,38 +76,6 @@ namespace MarketPlace.Api.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Products",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    ShortDescription = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: false),
-                    LongDescription = table.Column<string>(type: "text", nullable: false),
-                    PriceInKobo = table.Column<long>(type: "bigint", nullable: false),
-                    ThumbnailUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
-                    ThumbnailFileKey = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    LastUpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    LastUpdatedBy = table.Column<Guid>(type: "uuid", nullable: true),
-                    ImageUrlsArray = table.Column<string[]>(type: "text[]", nullable: false),
-                    ImageFileKeysArray = table.Column<string[]>(type: "text[]", nullable: false),
-                    StockQuantity = table.Column<int>(type: "integer", nullable: false),
-                    IsPublished = table.Column<bool>(type: "boolean", nullable: false),
-                    CategoryId = table.Column<int>(type: "integer", nullable: false),
-                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Products", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Products_Categories_CategoryId",
-                        column: x => x.CategoryId,
-                        principalTable: "Categories",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -216,13 +183,104 @@ namespace MarketPlace.Api.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Vendors",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Email = table.Column<string>(type: "text", nullable: false),
+                    Phone = table.Column<string>(type: "text", nullable: false),
+                    LogoUrl = table.Column<string>(type: "text", nullable: false),
+                    BannerUrl = table.Column<string>(type: "text", nullable: false),
+                    Location = table.Column<string>(type: "text", nullable: false),
+                    IsActivated = table.Column<bool>(type: "boolean", nullable: false),
+                    DateJoined = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastUpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    UserId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Vendors", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Vendors_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Products",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    ShortDescription = table.Column<string>(type: "character varying(250)", maxLength: 250, nullable: false),
+                    LongDescription = table.Column<string>(type: "text", nullable: false),
+                    BasePriceInKobo = table.Column<long>(type: "bigint", nullable: false),
+                    ThumbnailUrl = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
+                    ThumbnailFileKey = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
+                    ImageUrlsArray = table.Column<string[]>(type: "text[]", nullable: false),
+                    ImageFileKeysArray = table.Column<string[]>(type: "text[]", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    LastUpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LastUpdatedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    IsPublished = table.Column<bool>(type: "boolean", nullable: false),
+                    CategoryId = table.Column<int>(type: "integer", nullable: false),
+                    VendorId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Products", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Products_Categories_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "Categories",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Products_Vendors_VendorId",
+                        column: x => x.VendorId,
+                        principalTable: "Vendors",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ProductVariants",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    Sku = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
+                    PriceInKobo = table.Column<long>(type: "bigint", nullable: false),
+                    StockQuantity = table.Column<int>(type: "integer", nullable: false),
+                    Attributes = table.Column<string>(type: "jsonb", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: false),
+                    LastUpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    LastUpdatedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    ProductId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProductVariants", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ProductVariants_Products_ProductId",
+                        column: x => x.ProductId,
+                        principalTable: "Products",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "CartItems",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Quantity = table.Column<int>(type: "integer", nullable: false),
                     CartId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ProductId = table.Column<Guid>(type: "uuid", nullable: false)
+                    ProductVariantId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProductVariantId1 = table.Column<Guid>(type: "uuid", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -234,11 +292,16 @@ namespace MarketPlace.Api.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_CartItems_Products_ProductId",
-                        column: x => x.ProductId,
-                        principalTable: "Products",
+                        name: "FK_CartItems_ProductVariants_ProductVariantId",
+                        column: x => x.ProductVariantId,
+                        principalTable: "ProductVariants",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_CartItems_ProductVariants_ProductVariantId1",
+                        column: x => x.ProductVariantId1,
+                        principalTable: "ProductVariants",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -252,7 +315,7 @@ namespace MarketPlace.Api.Migrations
                     UnitPriceInKobo = table.Column<long>(type: "bigint", nullable: false),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     OrderId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ProductId = table.Column<Guid>(type: "uuid", nullable: false)
+                    ProductVariantId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -264,23 +327,11 @@ namespace MarketPlace.Api.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_OrderItems_Products_ProductId",
-                        column: x => x.ProductId,
-                        principalTable: "Products",
+                        name: "FK_OrderItems_ProductVariants_ProductVariantId",
+                        column: x => x.ProductVariantId,
+                        principalTable: "ProductVariants",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.InsertData(
-                table: "Roles",
-                columns: ["Id", "CreateAt", "CreatedBy", "Name"],
-                values: new object[,]
-                {
-                    { new Guid("019d884e-2c65-721d-a025-4124c7208592"), new DateTimeOffset(new DateTime(2026, 4, 13, 19, 32, 6, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), new Guid("00000000-0000-0000-0000-000000000000"), "SuperAdmin" },
-                    { new Guid("019d884f-78f1-7b14-8b0b-79116ef03b82"), new DateTimeOffset(new DateTime(2026, 4, 13, 19, 32, 6, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), new Guid("00000000-0000-0000-0000-000000000000"), "Admin" },
-                    { new Guid("019d884f-c93c-7500-996a-5af40b07445a"), new DateTimeOffset(new DateTime(2026, 4, 13, 19, 32, 6, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), new Guid("00000000-0000-0000-0000-000000000000"), "Manager" },
-                    { new Guid("019d8850-60a5-7066-85b2-bc78d43f19d8"), new DateTimeOffset(new DateTime(2026, 4, 13, 19, 32, 6, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), new Guid("00000000-0000-0000-0000-000000000000"), "Vendor" },
-                    { new Guid("019dc959-d027-7104-be07-754b1966c487"), new DateTimeOffset(new DateTime(2026, 4, 26, 15, 26, 37, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), new Guid("00000000-0000-0000-0000-000000000000"), "ProductReviewModerator" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -289,9 +340,14 @@ namespace MarketPlace.Api.Migrations
                 column: "CartId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CartItems_ProductId",
+                name: "IX_CartItems_ProductVariantId",
                 table: "CartItems",
-                column: "ProductId");
+                column: "ProductVariantId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CartItems_ProductVariantId1",
+                table: "CartItems",
+                column: "ProductVariantId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Carts_UserId",
@@ -311,9 +367,9 @@ namespace MarketPlace.Api.Migrations
                 column: "OrderId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_OrderItems_ProductId",
+                name: "IX_OrderItems_ProductVariantId",
                 table: "OrderItems",
-                column: "ProductId");
+                column: "ProductVariantId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Orders_UserId",
@@ -324,6 +380,22 @@ namespace MarketPlace.Api.Migrations
                 name: "IX_Products_CategoryId",
                 table: "Products",
                 column: "CategoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Products_VendorId",
+                table: "Products",
+                column: "VendorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductVariants_ProductId",
+                table: "ProductVariants",
+                column: "ProductId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ProductVariants_Sku",
+                table: "ProductVariants",
+                column: "Sku",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_ShippingAddresses_UserId",
@@ -345,6 +417,24 @@ namespace MarketPlace.Api.Migrations
                 name: "IX_Users_NormalizedEmail",
                 table: "Users",
                 column: "NormalizedEmail",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Vendors_Email",
+                table: "Vendors",
+                column: "Email",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Vendors_Name",
+                table: "Vendors",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Vendors_UserId",
+                table: "Vendors",
+                column: "UserId",
                 unique: true);
         }
 
@@ -373,16 +463,22 @@ namespace MarketPlace.Api.Migrations
                 name: "Orders");
 
             migrationBuilder.DropTable(
-                name: "Products");
+                name: "ProductVariants");
 
             migrationBuilder.DropTable(
                 name: "Roles");
 
             migrationBuilder.DropTable(
-                name: "Users");
+                name: "Products");
 
             migrationBuilder.DropTable(
                 name: "Categories");
+
+            migrationBuilder.DropTable(
+                name: "Vendors");
+
+            migrationBuilder.DropTable(
+                name: "Users");
         }
     }
 }

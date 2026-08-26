@@ -12,7 +12,8 @@ public sealed class User
     public bool EmailConfrimed { get; private set; }
     public DateTimeOffset CreatedOn { get; private init; }
 
-    public Cart? Cart { get; set; } = null;
+    public Cart? Cart { get; set; }
+    public Vendor? Vendor { get; set; }
 
     public ICollection<Role> Roles { get; set; } = [];
     public ICollection<ShippingAddress> ShippingAddresses { get; set; } = [];

@@ -17,7 +17,7 @@ public sealed class DeleteProductHandler(AppDbContext context, HybridCache hybri
     )
     {
         var product = await context
-            .Products.Where(p => p.Id == productId && p.CreatedBy == userId)
+            .Products.Where(p => p.Id == productId && p.VendorId == userId)
             .Select(s => new { s.Id })
             .FirstOrDefaultAsync(cancellationToken);
 

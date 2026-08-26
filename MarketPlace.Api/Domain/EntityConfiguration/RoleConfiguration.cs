@@ -1,5 +1,4 @@
 using MarketPlace.Api.Domain.Entities;
-using MarketPlace.Api.Domain.SeedData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -19,7 +18,5 @@ public sealed class RoleConfiguration : IEntityTypeConfiguration<Role>
             .HasMany(r => r.Users)
             .WithMany(u => u.Roles)
             .UsingEntity(e => e.ToTable("UserRoles"));
-
-        builder.HasData(SeedRole.InitialData);
     }
 }
