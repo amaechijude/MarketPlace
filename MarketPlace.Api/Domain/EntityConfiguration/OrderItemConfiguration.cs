@@ -20,7 +20,9 @@ public sealed class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
         builder.Property(oi => oi.UnitPriceInKobo).IsRequired();
 
         // query filter
-        builder.HasQueryFilter(ci => ci.Product != null && ci.Product.IsPublished);
+        builder.HasQueryFilter(ci =>
+            ci.ProductVariant != null && ci.ProductVariant.Product.IsPublished
+        );
 
         // navigation
         builder

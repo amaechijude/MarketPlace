@@ -42,7 +42,7 @@ public sealed class ValidateCheckoutHandler(
             var order =
                 await context
                     .Orders.Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.Product)
+                    .ThenInclude(oi => oi.ProductVariant)
                     .Where(o => o.UserId == userId && o.PaymentReference == paymentReference)
                     .FirstOrDefaultAsync(cancellationToken)
                 ?? throw new CheckoutValidationException("Order not found");
@@ -62,7 +62,7 @@ public sealed class ValidateCheckoutHandler(
             // Update stock quantities (confirm reservations)
             foreach (var item in order.OrderItems)
             {
-                item.Product?.StockQuantity -= item.Quantity;
+                item.ProductVariant?.StockQuantity -= item.Quantity;
             }
 
             await context.SaveChangesAsync(cancellationToken);

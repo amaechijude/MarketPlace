@@ -7,14 +7,9 @@ public sealed record UpdateProductRequest(
     string? Name,
     string? LongDescription,
     string? ShortDescription,
-    int? PriceInNaira,
     string? CategorySlug,
     bool? IsPublished
-)
-{
-    [JsonIgnore]
-    public long? PriceInKobo => PriceInNaira * 100;
-};
+);
 
 public class UpdateProductRequestValidator : AbstractValidator<UpdateProductRequest>
 {
@@ -38,10 +33,5 @@ public class UpdateProductRequestValidator : AbstractValidator<UpdateProductRequ
             .MaximumLength(300)
             .WithMessage("Product short description must be at most 300 characters long")
             .When(p => !string.IsNullOrWhiteSpace(p.ShortDescription));
-
-        RuleFor(p => p.PriceInNaira)
-            .GreaterThanOrEqualTo(1)
-            .WithMessage("Product price must be greater than or equal to 1")
-            .When(p => p.PriceInNaira.HasValue);
     }
 }

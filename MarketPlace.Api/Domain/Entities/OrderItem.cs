@@ -15,6 +15,6 @@ public sealed class OrderItem
     public required Guid OrderId { get; init; }
     public Order Order { get; private set; } = null!;
 
-    public required Guid ProductId { get; init; }
-    public Product? Product { get; set; }
+    public required Guid ProductVariantId { get; init; }
+    public ProductVariant? ProductVariant { get; set; }
 }

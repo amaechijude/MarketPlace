@@ -24,7 +24,7 @@ public sealed class DispatchChargeSuccess(
             var order =
                 await context
                     .Orders.Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.Product)
+                    .ThenInclude(oi => oi.ProductVariant)
                     .FirstOrDefaultAsync(
                         o => o.PaymentReference == body.Reference,
                         cancellationToken
@@ -45,7 +45,7 @@ public sealed class DispatchChargeSuccess(
             // Update stock quantities (confirm reservations)
             foreach (var item in order.OrderItems)
             {
-                item.Product?.StockQuantity -= item.Quantity;
+                item.ProductVariant?.StockQuantity -= item.Quantity;
             }
 
             await context.SaveChangesAsync(cancellationToken);

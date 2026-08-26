@@ -26,7 +26,8 @@ public static class UpdateItemQuantityEndpoint
 
                     await context
                         .CartItems.Where(ci =>
-                            ci.ProductId == request.ProductId && ci.Cart.UserId == userId
+                            ci.ProductVariantId == request.ProductVariantId
+                            && ci.Cart.UserId == userId
                         )
                         .ExecuteUpdateAsync(
                             s => s.SetProperty(p => p.Quantity, request.CurrentQuantity),

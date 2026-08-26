@@ -1,3 +1,5 @@
+using MarketPlace.Api.Features.Products.CreateProduct;
+
 namespace MarketPlace.Api.Domain.Entities;
 
 public sealed class Product
@@ -6,33 +8,50 @@ public sealed class Product
     public required string Name { get; set; } = string.Empty;
     public required string ShortDescription { get; set; } = string.Empty;
     public required string LongDescription { get; set; } = string.Empty;
-    public required long PriceInKobo { get; set; }
+    public required long BasePriceInKobo { get; set; }
+
+    // images
     public required string ThumbnailUrl { get; set; } = string.Empty;
     public required string ThumbnailFileKey { get; set; } = string.Empty;
-
-    public required DateTimeOffset CreatedAt { get; init; }
-    public DateTimeOffset? LastUpdatedAt { get; set; }
-    public Guid? LastUpdatedBy { get; set; }
-
-    // Stored as comma-separated string
     public required string[] ImageUrlsArray { get; set; } = [];
     public required string[] ImageFileKeysArray { get; set; } = [];
 
-    // Audit
-    public int StockQuantity { get; set; }
+    // audit
+    public required DateTimeOffset CreatedAt { get; init; }
+    public required Guid CreatedBy { get; init; }
+    public DateTimeOffset? LastUpdatedAt { get; set; }
+    public Guid? LastUpdatedBy { get; set; }
 
     // query filters
     public required bool IsPublished { get; set; }
     public Category Category { get; set; } = null!;
     public required int CategoryId { get; set; }
 
-    public required Guid CreatedBy { get; init; }
-
     // rel
-    public ICollection<CartItem> CartItems { get; set; } = [];
+    public ICollection<ProductVariant> Variants { get; set; } = [];
 
-    public void ConfirmStockReservation(int itemQuantity)
+    public void AddVariant(CreateVariantRequest request, DateTimeOffset createdAt, Guid createdby)
     {
-        throw new NotImplementedException();
+        var variant = ProductVariant.Create(
+            Id,
+            request.PriceInKobo,
+            createdAt,
+            request.Quantity,
+            createdby,
+            request.Attributes
+        );
+        Variants.Add(variant);
+    }
+
+    public void AddVariant(
+        IEnumerable<CreateVariantRequest> requests,
+        DateTimeOffset createdAt,
+        Guid createdby
+    )
+    {
+        foreach (var variant in requests)
+        {
+            AddVariant(variant, createdAt, createdby);
+        }
     }
 }

@@ -6,18 +6,18 @@ public sealed class CartItem
 
     public int Quantity { get; private set; } = 1;
 
-    public Guid CartId { get; set; }
+    public Guid CartId { get; private set; }
     public Cart Cart { get; private set; } = null!;
 
-    public Guid ProductId { get; set; }
-    public Product Product { get; set; } = null!;
+    public Guid ProductVariantId { get; private set; }
+    public ProductVariant ProductVariant { get; private set; } = null!;
 
-    public static CartItem Create(Guid cartId, Guid productId, int quantity) =>
+    public static CartItem Create(Guid cartId, Guid productVariantId, int quantity) =>
         new()
         {
             Id = Guid.CreateVersion7(),
             CartId = cartId,
-            ProductId = productId,
+            ProductVariantId = productVariantId,
             Quantity = Math.Clamp(quantity, 1, 50),
         };
 }

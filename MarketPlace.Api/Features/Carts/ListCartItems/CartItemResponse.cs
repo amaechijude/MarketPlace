@@ -5,7 +5,7 @@ namespace MarketPlace.Api.Features.Carts.ListCartItems;
 public sealed record CartItemResponse(
     Guid Id,
     string ProductName,
-    Guid ProductId,
+    Guid ProductVariantId,
     string ImageUrl,
     int Quantity,
     string CategorySlug,

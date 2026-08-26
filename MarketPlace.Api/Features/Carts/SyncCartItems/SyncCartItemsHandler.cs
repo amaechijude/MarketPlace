@@ -17,24 +17,26 @@ public sealed class SyncCartItemsHandler(AppDbContext context)
             return ApiResponse<int?>.NoContent();
 
         // unique variant Ids
-        var products = request.CLientItems.Select(s => new { s.ProductId, s.Quantity }).ToList();
+        var variants = request
+            .CLientItems.Select(s => new { s.ProductVariantId, s.Quantity })
+            .ToList();
 
-        var pIds = products.Select(s => s.ProductId).ToHashSet();
-        if (pIds is { Count: 0 })
+        var variantIds = variants.Select(s => s.ProductVariantId).ToHashSet();
+        if (variantIds is { Count: 0 })
             return ApiResponse<int?>.NoContent();
 
         // check if variants exist in the db
-        var existingProductIds = await context
-            .Products.AsNoTracking()
-            .Where(pv => pIds.Contains(pv.Id))
+        var existingVariantIds = await context
+            .ProductVariants.AsNoTracking()
+            .Where(pv => variantIds.Contains(pv.Id))
             .Select(s => s.Id)
             .ToListAsync(cancellationToken);
 
-        if (existingProductIds is { Count: 0 })
+        if (existingVariantIds is { Count: 0 })
             return ApiResponse<int?>.NoContent();
 
-        var safeSyncRequest = products
-            .Where(s => existingProductIds.Contains(s.ProductId))
+        var safeSyncRequest = variants
+            .Where(s => existingVariantIds.Contains(s.ProductVariantId))
             .ToList();
 
         if (safeSyncRequest is { Count: 0 })
@@ -42,26 +44,30 @@ public sealed class SyncCartItemsHandler(AppDbContext context)
 
         var userCart = await context
             .Carts.Where(c => c.UserId == userId)
-            .Select(s => new { s.Id, ItemsId = s.CartItems.Select(i => i.ProductId).ToList() })
+            .Select(s => new
+            {
+                s.Id,
+                ItemsId = s.CartItems.Select(i => i.ProductVariantId).ToList(),
+            })
             .FirstOrDefaultAsync(cancellationToken);
 
         var canSave = false;
         if (userCart is null)
         {
             var cart = Cart.Create(userId);
-            cart.AddCartItem(safeSyncRequest.Select(s => (s.ProductId, s.Quantity)));
+            cart.AddCartItem(safeSyncRequest.Select(s => (s.ProductVariantId, s.Quantity)));
             context.Carts.Add(cart);
             canSave = true;
         }
         else
         {
             var newItems = safeSyncRequest
-                .Where(r => !userCart.ItemsId.Contains(r.ProductId))
+                .Where(r => !userCart.ItemsId.Contains(r.ProductVariantId))
                 .ToList();
             if (newItems is { Count: > 0 })
             {
                 var itesm = newItems.Select(s =>
-                    CartItem.Create(userCart.Id, s.ProductId, s.Quantity)
+                    CartItem.Create(userCart.Id, s.ProductVariantId, s.Quantity)
                 );
                 context.CartItems.AddRange(itesm);
                 canSave = true;

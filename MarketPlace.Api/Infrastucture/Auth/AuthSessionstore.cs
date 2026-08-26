@@ -1,7 +1,7 @@
-using MarketPlace.Api.Common.Extensions;
-using Microsoft.Extensions.Caching.Hybrid;
 using System.Security.Cryptography;
 using System.Text;
+using MarketPlace.Api.Common.Extensions;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace MarketPlace.Api.Infrastucture.Auth;
 
@@ -54,9 +54,5 @@ public sealed class AuthSessionstore(HybridCache hybridCache, TimeProvider timeP
     }
 
     private static string GenerateToken() =>
-        Convert
-            .ToBase64String(RandomNumberGenerator.GetBytes(32))
-            .Replace("+", "_")
-            .Replace("/", "_")
-            .TrimEnd('=');
+        Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(32));
 }

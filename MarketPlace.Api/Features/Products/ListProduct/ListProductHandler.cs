@@ -33,7 +33,7 @@ public sealed class ListProductHandler(AppDbContext context) : IRequestHandler
             .Select(s => new ListProductResponse(
                 s.Id,
                 s.Name,
-                s.PriceInKobo,
+                s.BasePriceInKobo,
                 s.ThumbnailUrl,
                 s.Category.Slug
             ))

@@ -41,11 +41,18 @@ public sealed class GetProductHandler(AppDbContext context, HybridCache hybridCa
         p => new GetProductResponse(
             Id: p.Id,
             Name: p.Name,
-            PriceInKobo: p.PriceInKobo,
             LongDescription: p.LongDescription,
             ShortDescription: p.ShortDescription,
             ThumbnailUrl: p.ThumbnailUrl,
             ImageUrlsArray: p.ImageUrlsArray,
-            CategorySlug: p.Category.Slug
+            CategorySlug: p.Category.Slug,
+            Variants: p.Variants.Select(s => new VariantResponse(
+                    s.Id,
+                    s.Sku,
+                    s.PriceInKobo,
+                    s.StockQuantity,
+                    s.Attributes
+                ))
+                .ToList()
         );
 }

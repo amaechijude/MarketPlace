@@ -11,9 +11,12 @@ public sealed class Cart
 
     public static Cart Create(Guid userId) => new() { Id = Guid.CreateVersion7(), UserId = userId };
 
-    public void AddCartItem(Guid productId, int quantity)
+    public void AddCartItem(Guid productVariantId, int quantity)
     {
-        var item = CartItem.Create(this.Id, productId, quantity);
+        if (CartItems.Any(c => c.ProductVariantId == productVariantId))
+            return;
+
+        var item = CartItem.Create(this.Id, productVariantId, quantity);
         CartItems.Add(item);
     }
 

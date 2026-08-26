@@ -45,7 +45,7 @@ public sealed class InitiateCheckoutHandler(
             return ApiResponse<CheckoutResponse>.BadRequest("Cart Empty");
 
         var cartItems = await context
-            .CartItems.Include(ci => ci.Product)
+            .CartItems.Include(ci => ci.ProductVariant)
             .Where(ci => ci.CartId == cart.Id)
             .ToListAsync(cancellationToken);
 
@@ -68,21 +68,21 @@ public sealed class InitiateCheckoutHandler(
         {
             foreach (var item in cartItems)
             {
-                if (item.Quantity > item.Product.StockQuantity)
+                if (item.Quantity > item.ProductVariant.StockQuantity)
                     throw new CheckoutValidationException(
-                        $"Insufficient stock for {item.Product.Name}"
+                        $"Insufficient stock for {item.ProductVariant.Sku}"
                     );
 
-                subtotalAmountInKobo += item.Quantity * item.Product.PriceInKobo;
+                subtotalAmountInKobo += item.Quantity * item.ProductVariant.PriceInKobo;
                 orderItems.Add(
                     new OrderItem
                     {
-                        ProductName = item.Product.Name,
-                        Sku = item.Product.Name,
+                        ProductName = item.ProductVariant.Product.Name,
+                        Sku = item.ProductVariant.Sku,
                         Quantity = item.Quantity,
-                        UnitPriceInKobo = item.Product.PriceInKobo,
+                        UnitPriceInKobo = item.ProductVariant.PriceInKobo,
                         OrderId = order.Id,
-                        ProductId = item.ProductId,
+                        ProductVariantId = item.ProductVariantId,
                         CreatedAt = now,
                     }
                 );

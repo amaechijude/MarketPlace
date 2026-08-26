@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using FluentValidation;
+using JetBrains.Annotations;
 using SkiaSharp;
 
 namespace MarketPlace.Api.Features.Products.CreateProduct;
@@ -12,12 +14,15 @@ public sealed record CreateProductRequest(
     string CategorySlug,
     IFormFile Thumbnail,
     IFormFileCollection ImageArray,
+    ICollection<CreateVariantRequest> Variants,
     bool IsPublished = false
 )
 {
+    [JsonIgnore]
     public long PriceInKobo => PriceInNaira * 100;
 };
 
+[UsedImplicitly]
 public sealed class CreateProductRequestValidator : AbstractValidator<CreateProductRequest>
 {
     public CreateProductRequestValidator()
@@ -86,6 +91,15 @@ public sealed class CreateProductRequestValidator : AbstractValidator<CreateProd
                     .Must(IsValidImage)
                     .WithMessage("Invalid image");
             });
+
+        RuleFor(p => p.Variants)
+            .Cascade(CascadeMode.Stop)
+            .Must(v => v.Count >= 1)
+            .WithMessage("Product must have at leas one variant")
+            .DependentRules(() =>
+            {
+                RuleForEach(p => p.Variants).SetValidator(new CreateProductVariantValidator());
+            });
     }
 
     private const long MaxImageBytes = 7L * 1024 * 1024; // 7 MB
@@ -117,4 +131,31 @@ public sealed class CreateProductRequestValidator : AbstractValidator<CreateProd
 
     private static bool IsValidMimeType(IFormFile file) =>
         AcceptedMimeTypes.Contains(file.ContentType);
+}
+
+public sealed record CreateVariantRequest(
+    int PriceInNaira,
+    int Quantity,
+    Dictionary<string, string> Attributes
+)
+{
+    [JsonIgnore]
+    internal int PriceInKobo => PriceInNaira / 100;
+};
+
+public sealed class CreateProductVariantValidator : AbstractValidator<CreateVariantRequest>
+{
+    public CreateProductVariantValidator()
+    {
+        RuleFor(v => v.PriceInNaira).GreaterThanOrEqualTo(1);
+        RuleFor(v => v.Quantity).GreaterThanOrEqualTo(1);
+
+        RuleForEach(v => v.Attributes)
+            .Cascade(CascadeMode.Stop)
+            .Must(a => a.Key.Length >= 2)
+            .WithMessage("An Attribute key must contain at least 2 characters")
+            .Must(a => a.Value.Length >= 2)
+            .WithMessage("An Attribute value must contain at least 2 characters")
+            .When(v => v.Attributes.Count > 0);
+    }
 }

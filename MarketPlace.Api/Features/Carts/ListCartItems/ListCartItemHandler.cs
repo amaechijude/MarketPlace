@@ -46,11 +46,11 @@ public sealed class ListCartItemHandler(AppDbContext context) : IRequestHandler
     private static readonly Expression<Func<CartItem, CartItemResponse>> ProjectCartItemToResponse =
         s => new CartItemResponse(
             Id: s.Id,
-            ProductName: s.Product.Name,
-            ProductId: s.ProductId,
-            ImageUrl: s.Product.ThumbnailUrl,
+            ProductName: s.ProductVariant.Product.Name,
+            ProductVariantId: s.ProductVariantId,
+            ImageUrl: s.ProductVariant.Product.ThumbnailUrl,
             Quantity: s.Quantity,
-            CategorySlug: s.Product.Category.Name,
-            UnitPriceInKobo: s.Product.PriceInKobo
+            CategorySlug: s.ProductVariant.Product.Category.Name,
+            UnitPriceInKobo: s.ProductVariant.PriceInKobo
         );
 }

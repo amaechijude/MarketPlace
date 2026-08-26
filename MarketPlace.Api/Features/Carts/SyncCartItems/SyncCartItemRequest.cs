@@ -5,4 +5,4 @@ namespace MarketPlace.Api.Features.Carts.SyncCartItems;
 
 public sealed record SyncCartItemRequest(List<SyncBody> CLientItems);
 
-public sealed record SyncBody([IsValidGuid] Guid ProductId, [Range(1, 100)] int Quantity);
+public sealed record SyncBody([IsValidGuid] Guid ProductVariantId, [Range(1, 100)] int Quantity);

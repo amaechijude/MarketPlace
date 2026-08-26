@@ -48,29 +48,41 @@ public sealed class CreateProductHandler(
         upload.Remove(thumbnail);
 
         var utcNow = timeProvider.GetUtcNow();
-        var product = new Product
-        {
-            Id = Guid.CreateVersion7(),
-            Name = request.Name,
-            ShortDescription = request.ShortDescription,
-            LongDescription = request.LongDescription,
-            PriceInKobo = request.PriceInKobo,
-            ThumbnailUrl = thumbnail.FileUrl,
-            ThumbnailFileKey = thumbnail.FileKey,
-            CreatedAt = utcNow,
-            LastUpdatedAt = utcNow,
-            ImageUrlsArray = upload.Select(s => s.FileUrl).ToArray(),
-            ImageFileKeysArray = upload.Select(s => s.FileKey).ToArray(),
-            IsPublished = request.IsPublished,
-            CategoryId = category.Id,
-            CreatedBy = userId,
-        };
+        var product = CreateProduct(request, userId, thumbnail, utcNow, upload, category.Id);
+
+        product.AddVariant(request.Variants, utcNow, userId);
 
         context.Products.Add(product);
         await context.SaveChangesAsync(cancellationToken);
 
         return ApiResponse<int>.Created();
     }
+
+    private static Product CreateProduct(
+        CreateProductRequest request,
+        Guid userId,
+        ImageUploadResult thumbnail,
+        DateTimeOffset utcNow,
+        List<ImageUploadResult> upload,
+        int categoryId
+    ) =>
+        new()
+        {
+            Id = Guid.CreateVersion7(),
+            Name = request.Name,
+            ShortDescription = request.ShortDescription,
+            LongDescription = request.LongDescription,
+            ThumbnailUrl = thumbnail.FileUrl,
+            ThumbnailFileKey = thumbnail.FileKey,
+            CreatedAt = utcNow,
+            LastUpdatedAt = utcNow,
+            ImageUrlsArray = [.. upload.Select(s => s.FileUrl)],
+            ImageFileKeysArray = [.. upload.Select(s => s.FileKey)],
+            IsPublished = request.IsPublished,
+            CategoryId = categoryId,
+            CreatedBy = userId,
+            BasePriceInKobo = request.Variants.Select(s => s.PriceInKobo).First(),
+        };
 
     private async Task<List<ImageUploadResult>?> UploadImages(
         IFormFile thumbnail,

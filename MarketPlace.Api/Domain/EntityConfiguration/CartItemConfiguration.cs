@@ -12,14 +12,14 @@ public sealed class CartItemConfiguration : IEntityTypeConfiguration<CartItem>
 
         builder.HasKey(ci => ci.Id);
 
-        builder.HasQueryFilter(ci => ci.Product.IsPublished);
+        builder.HasQueryFilter(ci => ci.ProductVariant.Product.IsPublished);
 
         builder.Property(ci => ci.Quantity).IsRequired();
 
         builder
-            .HasOne(ci => ci.Product)
-            .WithMany(pv => pv.CartItems)
-            .HasForeignKey(ci => ci.ProductId)
+            .HasOne(ci => ci.ProductVariant)
+            .WithMany()
+            .HasForeignKey(ci => ci.ProductVariantId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

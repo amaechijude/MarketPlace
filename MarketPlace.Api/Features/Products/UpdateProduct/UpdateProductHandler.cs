@@ -36,9 +36,6 @@ public sealed class UpdateProductHandler(
         if (!string.IsNullOrWhiteSpace(request.ShortDescription))
             product.ShortDescription = request.ShortDescription.Trim();
 
-        if (request.PriceInKobo.HasValue)
-            product.PriceInKobo = (long)request.PriceInKobo;
-
         if (!string.IsNullOrWhiteSpace(request.CategorySlug))
         {
             var slug = Slugger.Slugify(request.CategorySlug);

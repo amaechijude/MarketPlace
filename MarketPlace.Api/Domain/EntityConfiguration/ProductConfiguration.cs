@@ -13,12 +13,18 @@ public sealed class ProductConfiguration : IEntityTypeConfiguration<Product>
 
         builder.Property(p => p.Name).IsRequired().HasMaxLength(100);
         builder.Property(p => p.ShortDescription).HasMaxLength(250);
-        builder.Property(p => p.PriceInKobo).IsRequired();
 
         // thumbnail
         builder.Property(p => p.ThumbnailUrl).HasMaxLength(500);
         builder.Property(p => p.ThumbnailFileKey).HasMaxLength(300);
 
         builder.HasQueryFilter(p => p.IsPublished);
+
+        // rel
+        builder
+            .HasMany(p => p.Variants)
+            .WithOne(v => v.Product)
+            .HasForeignKey(v => v.ProductId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

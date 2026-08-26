@@ -9,7 +9,7 @@ public sealed class Order
     public OrderStatus Status { get; private set; } = OrderStatus.Pending;
 
     // price snapshot
-    public long SubtotalInKobo { get; init; }
+    public long SubtotalInKobo { get; private set; }
     public required long ShippingFeeInKobo { get; init; }
     public long TotalInKobo { get; private set; }
 
@@ -30,6 +30,7 @@ public sealed class Order
     public long AttachSubTotal(long subtotalAmountInKobo)
     {
         var sum = subtotalAmountInKobo + ShippingFeeInKobo;
+        SubtotalInKobo = subtotalAmountInKobo;
         TotalInKobo = sum;
         return sum;
     }
