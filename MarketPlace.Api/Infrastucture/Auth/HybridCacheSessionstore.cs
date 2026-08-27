@@ -1,21 +1,20 @@
 using System.Security.Cryptography;
 using System.Text;
-using MarketPlace.Api.Common.Extensions;
 using Microsoft.Extensions.Caching.Hybrid;
 
 namespace MarketPlace.Api.Infrastucture.Auth;
 
-public sealed class AuthSessionstore(HybridCache hybridCache, TimeProvider timeProvider)
-    : ISingletonMarker
+public sealed class HybridCacheSessionstore(HybridCache hybridCache, TimeProvider timeProvider)
+    : IAuthSessionStore
 {
-    public async ValueTask<(string accessToken, TimeSpan ttl)> CreateAsync(
+    public async Task<(string accessToken, TimeSpan ttl)> CreateAsync(
         Guid userId,
         IEnumerable<string> roles,
         CancellationToken ct
     )
     {
-        var token = GenerateToken();
-        var ttl = TimeSpan.FromDays(7);
+        var token = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(32));
+        var ttl = AuthSessionOptions.DefaultTimeSpan;
 
         var sessionRecord = new AuthSessionRecord(userId, roles, timeProvider.GetUtcNow().Add(ttl));
 
@@ -33,7 +32,7 @@ public sealed class AuthSessionstore(HybridCache hybridCache, TimeProvider timeP
         return (token, ttl);
     }
 
-    public async ValueTask<AuthSessionRecord?> GetSessionAsync(
+    public async Task<AuthSessionRecord?> GetSessionAsync(
         string token,
         CancellationToken cancellationToken
     ) =>
@@ -43,16 +42,23 @@ public sealed class AuthSessionstore(HybridCache hybridCache, TimeProvider timeP
             cancellationToken: cancellationToken
         );
 
-    public async ValueTask DeleteAsync(string token, CancellationToken cancellationToken) =>
+    public async Task<(string accessToken, TimeSpan ttl)> RefreshSessionAsync(
+        string token,
+        AuthSessionRecord record,
+        CancellationToken ct
+    )
+    {
+        await DeleteAsync(token, ct);
+        return await CreateAsync(record.UserId, record.Roles, ct);
+    }
+
+    public async Task DeleteAsync(string token, CancellationToken cancellationToken) =>
         await hybridCache.RemoveAsync(key: HashKey(token), cancellationToken: cancellationToken);
 
     private static string HashKey(string token)
     {
         Span<byte> hash = stackalloc byte[32];
         SHA256.HashData(Encoding.UTF8.GetBytes(token), hash);
-        return Convert.ToHexString(hash);
+        return Convert.ToHexStringLower(hash);
     }
-
-    private static string GenerateToken() =>
-        Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(32));
 }

@@ -11,7 +11,7 @@ namespace MarketPlace.Api.Features.Users.ForgotPassword;
 public sealed class ResetPasswordHandler(
     AppDbContext context,
     VerificationCodeManager verificationCodeManager,
-    AuthSessionstore authSessionstore,
+    IAuthSessionStore authSessionstore,
     IPasswordHasher<User> hasher
 ) : IRequestHandler
 {

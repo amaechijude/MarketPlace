@@ -10,7 +10,7 @@ using Microsoft.Extensions.Options;
 namespace MarketPlace.Api.Features.Users.Login;
 
 public sealed class GoogleLoginHandler(
-    AuthSessionstore authSessionstore,
+    IAuthSessionStore authSessionstore,
     AppDbContext context,
     IOptions<GoogleSettings> googleOptions,
     ILogger<GoogleLoginHandler> logger,

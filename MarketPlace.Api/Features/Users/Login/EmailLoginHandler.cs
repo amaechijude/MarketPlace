@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 namespace MarketPlace.Api.Features.Users.Login;
 
 public sealed class EmailLoginHandler(
-    AuthSessionstore authSessionstore,
+    IAuthSessionStore authSessionstore,
     AppDbContext context,
     IPasswordHasher<User> hasher,
     VerificationCodeManager verificationCodeManager

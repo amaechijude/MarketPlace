@@ -1,9 +1,9 @@
 using DotNetEnv;
 using DotNetEnv.Configuration;
 using FluentValidation;
+using MarketPlace.Api;
 using MarketPlace.Api.Common.ExceptionHandler;
 using MarketPlace.Api.Common.Extensions;
-using MarketPlace.Api.Domain.Entities;
 using MarketPlace.Api.Features.Users.Login;
 using MarketPlace.Api.Features.Users.Register;
 using MarketPlace.Api.Features.Webhooks;
@@ -16,10 +16,16 @@ using MarketPlace.Api.Infrastucture.OtpValidation;
 using MarketPlace.Api.Infrastucture.PaymentHandlers;
 using MarketPlace.Api.Infrastucture.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Identity;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseDefaultServiceProvider(
+    (context, options) =>
+    {
+        options.ValidateScopes = true;
+        options.ValidateOnBuild = true;
+    }
+);
 
 builder.Configuration.AddDotNetEnv(options: LoadOptions.TraversePath());
 
@@ -60,21 +66,13 @@ builder
 // webhook keyed
 builder.Services.AddWebHookKeyedDispatchers();
 
-// Auth
-builder
-    .Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>()
-    .AddAuthentication(AuthSessionOptions.DefaultAuthenticationScheme)
-    .AddScheme<AuthSessionOptions, AuthSessionHandler>(
-        AuthSessionOptions.DefaultAuthenticationScheme,
-        _ => { }
-    );
-
 // Authz
 builder.Services.AddAuthorization();
 
 // infra
 builder
-    .Services.AddCacheInfrastructure(builder.Configuration) //cache
+    .Services.AddAuthInfrastructure()
+    .AddCacheInfrastructure(builder.Configuration) //cache
     .AddDatabaseInfrastructure(builder.Configuration) // db
     .AddEmailInfrastructure(builder.Environment) // email
     .AddRateLimitingInfrastructure() // ratelimit
@@ -82,7 +80,9 @@ builder
     .AddPaymentHandlersInfrastructure(builder.Configuration);
 
 //hosted service
-builder.Services.AddHostedService<VerificationCodeBackgroundDispatcher>();
+builder
+    .Services.AddHostedService<StartupCheck>()
+    .AddHostedService<VerificationCodeBackgroundDispatcher>();
 
 // forwadedheaders
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
@@ -118,6 +118,7 @@ app.UseAuthentication();
 
 //  Authz
 app.UseAuthorization();
+app.UseMiddleware<RefreshTokenMiddleware>();
 
 // Antiforgery
 

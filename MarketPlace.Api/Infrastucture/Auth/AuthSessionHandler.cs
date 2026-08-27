@@ -10,7 +10,7 @@ public sealed class AuthSessionHandler(
     IOptionsMonitor<AuthSessionOptions> options,
     ILoggerFactory logger,
     UrlEncoder encoder,
-    AuthSessionstore authSessionstore
+    IAuthSessionStore authSessionstore
 ) : AuthenticationHandler<AuthSessionOptions>(options, logger, encoder)
 {
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
@@ -31,7 +31,9 @@ public sealed class AuthSessionHandler(
         ];
 
         ClaimsIdentity identity = new(claims, Scheme.Name);
-        AuthenticationTicket ticket = new(new ClaimsPrincipal(identity), Scheme.Name);
+        ClaimsPrincipal principal = new(identity);
+
+        AuthenticationTicket ticket = new(principal, Scheme.Name);
 
         return AuthenticateResult.Success(ticket);
     }

@@ -9,7 +9,7 @@ namespace MarketPlace.Api.Features.Users.Register;
 public sealed class RegisterUserVerifyOtpHandler(
     AppDbContext context,
     VerificationCodeManager verificationCodeManager,
-    AuthSessionstore authSessionstore
+    IAuthSessionStore authSessionstore
 ) : IRequestHandler
 {
     /// <summary>

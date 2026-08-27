@@ -1,7 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using MarketPlace.Api.Common.Extensions;
 using StackExchange.Redis;
 
 namespace MarketPlace.Api.Infrastucture.Auth;
@@ -9,24 +8,28 @@ namespace MarketPlace.Api.Infrastucture.Auth;
 public sealed class RedisSessionStore(
     IConnectionMultiplexer connectionMultiplexer,
     TimeProvider timeProvider
-) : ISingletonMarker
+) : IAuthSessionStore
 {
     private readonly IDatabase _redis = connectionMultiplexer.GetDatabase();
 
-    public async Task<string> CreateAsynce(Guid userid, IEnumerable<string> roles)
+    public async Task<(string accessToken, TimeSpan ttl)> CreateAsync(
+        Guid userid,
+        IEnumerable<string> roles,
+        CancellationToken ct
+    )
     {
-        var token = GenerateToken();
+        var token = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(32));
 
-        var ttl = TimeSpan.FromDays(7);
+        var ttl = AuthSessionOptions.DefaultTimeSpan;
         AuthSessionRecord sessionRecord = new(userid, roles, timeProvider.GetUtcNow().Add(ttl));
         var json = JsonSerializer.Serialize(sessionRecord);
 
         await _redis.StringSetAsync(key: HashKey(token), value: json, expiry: ttl);
 
-        return token;
+        return (token, ttl);
     }
 
-    public async Task<AuthSessionRecord?> GetSessionAsync(string token)
+    public async Task<AuthSessionRecord?> GetSessionAsync(string token, CancellationToken ct)
     {
         var json = await _redis.StringGetAsync(key: HashKey(token));
         return json.IsNullOrEmpty
@@ -34,22 +37,23 @@ public sealed class RedisSessionStore(
             : JsonSerializer.Deserialize<AuthSessionRecord>(json.ToString());
     }
 
-    public async Task DeleteAsync(string token) => await _redis.KeyDeleteAsync(key: HashKey(token));
+    public async Task<(string accessToken, TimeSpan ttl)> RefreshSessionAsync(
+        string token,
+        AuthSessionRecord record,
+        CancellationToken ct
+    )
+    {
+        await DeleteAsync(token, ct);
+        return await CreateAsync(record.UserId, record.Roles, ct);
+    }
 
-    public async Task RefreshAsync(string token, TimeSpan ttl) =>
-        await _redis.KeyExpireAsync(key: HashKey(token), expiry: ttl);
+    public async Task DeleteAsync(string token, CancellationToken ct) =>
+        await _redis.KeyDeleteAsync(key: HashKey(token));
 
     private static string HashKey(string token)
     {
         Span<byte> hash = stackalloc byte[32];
         SHA256.HashData(Encoding.UTF8.GetBytes(token), hash);
-        return Convert.ToHexString(hash);
+        return Convert.ToHexStringLower(hash);
     }
-
-    private static string GenerateToken() =>
-        Convert
-            .ToBase64String(RandomNumberGenerator.GetBytes(32))
-            .Replace("+", "_")
-            .Replace("/", "_")
-            .TrimEnd('=');
 }

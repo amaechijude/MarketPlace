@@ -22,6 +22,9 @@ public static class PaystackEndpoint
                         out var signature
                     );
 
+                    if (string.IsNullOrEmpty(signature))
+                        return Results.Ok();
+
                     _ = await handler.HandleWebhookAsync(rawBody, signature, ct);
 
                     return Results.Ok();

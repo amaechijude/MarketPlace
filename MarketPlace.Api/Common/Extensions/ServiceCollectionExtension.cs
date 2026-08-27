@@ -4,61 +4,46 @@ namespace MarketPlace.Api.Common.Extensions;
 
 public static class ServiceCollectionExtension
 {
-    public static IServiceCollection AddScopedRequestHandlers(
-        this IServiceCollection services,
+    extension(IServiceCollection services)
+    {
+        public IServiceCollection AddScopedRequestHandlers(
         Assembly assembly
     )
-    {
-        var handlerClasses = GetHandlers(assembly, typeof(IRequestHandler));
-
-        if (handlerClasses.Count == 0)
-            return services;
-
-        foreach (var handler in handlerClasses)
         {
-            services.AddScoped(handler);
+            foreach (var handler in GetHandlers(assembly, typeof(IRequestHandler)))
+            {
+                services.AddScoped(handler);
+            }
+
+            return services;
         }
 
-        return services;
-    }
-
-    public static IServiceCollection AddTransientHandlers(
-        this IServiceCollection services,
-        Assembly assembly
-    )
-    {
-        List<Type> handlerClasses = GetHandlers(assembly, typeof(ITransientMarker));
-
-        if (handlerClasses.Count == 0)
-            return services;
-
-        foreach (Type handler in handlerClasses)
+        public IServiceCollection AddTransientHandlers(
+            Assembly assembly
+        )
         {
-            services.AddTransient(handler);
+            foreach (var handler in GetHandlers(assembly, typeof(ITransientMarker)))
+            {
+                services.AddTransient(handler);
+            }
+
+            return services;
         }
 
-        return services;
-    }
-
-    public static IServiceCollection AddSingletonHandlers(
-        this IServiceCollection services,
-        Assembly assembly
-    )
-    {
-        var handlerClasses = GetHandlers(assembly, typeof(ISingletonMarker));
-
-        if (handlerClasses.Count == 0)
-            return services;
-
-        foreach (var handler in handlerClasses)
+        public IServiceCollection AddSingletonHandlers(
+            Assembly assembly
+        )
         {
-            services.AddScoped(handler);
-        }
+            foreach (var handler in GetHandlers(assembly, typeof(ISingletonMarker)))
+            {
+                services.AddScoped(handler);
+            }
 
-        return services;
+            return services;
+        }
     }
 
-    private static List<Type> GetHandlers(Assembly assembly, Type type) =>
+    private static IEnumerable<Type> GetHandlers(Assembly assembly, Type type) =>
         [
             .. assembly
                 .GetTypes()

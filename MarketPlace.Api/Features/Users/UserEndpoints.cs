@@ -37,7 +37,7 @@ public sealed class UserEndpoints : IRequestEndpoints
     }
 
     private static async ValueTask<IResult> HandleLogout(
-        AuthSessionstore authSessionstore,
+        IAuthSessionStore authSessionstore,
         HttpRequest httpRequest,
         CancellationToken ct
     )
