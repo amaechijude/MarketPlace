@@ -1,7 +1,14 @@
-@MarketPlace.Api_HostAddress = http://localhost:5177
+@MarketPlaceApi_HostAddress = http://localhost:5177
 
 
-GET {{MarketPlace.Api_HostAddress}}
+GET {{MarketPlaceApi_HostAddress}}
 Accept: application/json
 
 ###
+POST {{MarketPlaceApi_HostAddress}}/users/register
+Content-Type: application/json
+
+{
+    "email": "testuser@gmail.com",
+    "password": "Password@21123"
+}

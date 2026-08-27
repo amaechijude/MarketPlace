@@ -1,5 +1,7 @@
 using System.Security.Claims;
 using System.Threading.RateLimiting;
+using RedisRateLimiting;
+using StackExchange.Redis;
 
 namespace MarketPlace.Api.Infrastucture.RateLimiting;
 
@@ -7,6 +9,9 @@ public static class RateLimitingExtension
 {
     public static IServiceCollection AddRateLimitingInfrastructure(this IServiceCollection services)
     {
+        var connectionMultplexer = services
+            .BuildServiceProvider()
+            .GetRequiredService<IConnectionMultiplexer>();
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -36,7 +41,24 @@ public static class RateLimitingExtension
                         }
                     )
             );
+            // redis
 
+            // redis login policy
+            options.AddPolicy(
+                policyName: RateLimitPolicyKeys.RedisLoginTokenBucket,
+                context =>
+                    RedisRateLimitPartition.GetTokenBucketRateLimiter(
+                        partitionKey: GetClientIp(context),
+                        factory: _ => new RedisTokenBucketRateLimiterOptions
+                        {
+                            ConnectionMultiplexerFactory = () => connectionMultplexer,
+                            TokenLimit = 5,
+                            ReplenishmentPeriod = TimeSpan.FromMinutes(1),
+                            TokensPerPeriod = 1,
+                        }
+                    )
+            );
+            // redis
             // Register policy
             options.AddPolicy(
                 policyName: RateLimitPolicyKeys.RegisterTokenBucket,
@@ -73,26 +95,14 @@ public static class RateLimitingExtension
                         }
                     )
             );
-
-            // news letter
-            options.AddPolicy(
-                policyName: RateLimitPolicyKeys.NewsLetterFixed,
-                context =>
-                    RateLimitPartition.GetFixedWindowLimiter(
-                        partitionKey: GetClientIp(context),
-                        factory: _ => new FixedWindowRateLimiterOptions
-                        {
-                            AutoReplenishment = true,
-                            PermitLimit = 4,
-                            QueueLimit = 0,
-                            Window = TimeSpan.FromMinutes(1),
-                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                        }
-                    )
-            );
         });
 
         return services;
+    }
+
+    private static string GetClientIp(HttpContext context)
+    {
+        return context.Connection.RemoteIpAddress?.ToString() ?? "anonymous";
     }
 
     private static string GetUserIdentifier(HttpContext context)
@@ -100,34 +110,5 @@ public static class RateLimitingExtension
         var user = context.User.FindFirst(ClaimTypes.NameIdentifier);
 
         return user is null ? "anonymous" : user.Value;
-    }
-
-    private static string GetClientIp(HttpContext context)
-    {
-        // cloud flare
-        string? cloudflareIp = context.Request.Headers["cf-connecting-ip"];
-        if (!string.IsNullOrWhiteSpace(cloudflareIp))
-            return cloudflareIp;
-
-        // nginx
-        string? nginxIp = context.Request.Headers["x-real-ip"];
-        if (!string.IsNullOrWhiteSpace(nginxIp))
-            return nginxIp;
-
-        // x forwaderd
-        string? forwarded = context.Request.Headers["x-forwarded-for"];
-        if (!string.IsNullOrWhiteSpace(forwarded))
-        {
-            var forwardedIps = forwarded
-                .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                .Select(x => x.Trim())
-                .ToArray();
-            if (forwardedIps.Length > 0)
-                return forwardedIps[^1];
-        }
-
-        // fall back
-        var remoteIp = context.Connection.RemoteIpAddress;
-        return remoteIp is not null ? remoteIp.ToString() : "anonymous";
     }
 }
