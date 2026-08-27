@@ -15,7 +15,7 @@ public sealed class GoogleLoginHandler(
     IOptions<GoogleSettings> googleOptions,
     ILogger<GoogleLoginHandler> logger,
     TimeProvider timeProvider
-) : IRequestHandler
+) : IScopedRequestHandler
 {
     public async Task<LoginResponse> HandleAsync(
         GoogleLoginRequest request,

@@ -10,7 +10,7 @@ namespace MarketPlace.Api.Features.ShippingFees;
 public sealed record ListShippingFeeResponse(List<ShippingFeeResponse> ShippingFees);
 
 public sealed class GetShippingFeeHandler(AppDbContext context, HybridCache hybridCache)
-    : IRequestHandler
+    : IScopedRequestHandler
 {
     public async Task<ApiResponse<ShippingFeeResponse>> HandleAsync(
         int id,

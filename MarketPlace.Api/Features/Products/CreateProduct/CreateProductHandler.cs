@@ -15,7 +15,7 @@ public sealed class CreateProductHandler(
     R2ImageUploadService r2ImageUpload,
     TimeProvider timeProvider,
     ILogger<CreateProductHandler> logger
-) : IRequestHandler
+) : IScopedRequestHandler
 {
     public async Task<ApiResponse<int>> HandleAsync(
         CreateProductRequest request,

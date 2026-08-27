@@ -9,7 +9,7 @@ namespace MarketPlace.Api.Features.ShippingFees;
 public sealed class CreateShippingFeeHandler(
     AppDbContext context,
     ILogger<CreateShippingFeeHandler> logger
-) : IRequestHandler
+) : IScopedRequestHandler
 {
     public async Task<ApiResponse<int>> HandleAsync(
         Guid userId,

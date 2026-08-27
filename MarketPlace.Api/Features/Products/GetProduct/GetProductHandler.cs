@@ -10,7 +10,7 @@ using Microsoft.Extensions.Caching.Hybrid;
 namespace MarketPlace.Api.Features.Products.GetProduct;
 
 public sealed class GetProductHandler(AppDbContext context, HybridCache hybridCache)
-    : IRequestHandler
+    : IScopedRequestHandler
 {
     public async Task<ApiResponse<GetProductResponse>> HandleAsync(
         Guid productId,

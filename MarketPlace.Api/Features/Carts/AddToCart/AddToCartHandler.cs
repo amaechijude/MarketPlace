@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MarketPlace.Api.Features.Carts.AddToCart;
 
-public sealed class AddToCartHandler(AppDbContext context) : IRequestHandler
+public sealed class AddToCartHandler(AppDbContext context) : IScopedRequestHandler
 {
     public async Task<ApiResponse<int?>> HandleAsync(
         Guid userId,

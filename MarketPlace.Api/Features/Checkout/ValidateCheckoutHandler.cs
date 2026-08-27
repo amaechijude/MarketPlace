@@ -11,7 +11,7 @@ public sealed class ValidateCheckoutHandler(
     AppDbContext context,
     PaystackApiClient paystackApiClient,
     ILogger<ValidateCheckoutHandler> logger
-) : IRequestHandler
+) : IScopedRequestHandler
 {
     public async Task<ApiResponse<ValidateCheckoutResponse>> HandleAsync(
         Guid userId,

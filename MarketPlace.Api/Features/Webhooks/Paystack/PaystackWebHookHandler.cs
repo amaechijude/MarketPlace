@@ -11,7 +11,7 @@ public sealed class PaystackWebHookHandler(
     IOptions<PayStackSettings> options,
     IServiceProvider serviceProvider,
     ILogger<PaystackWebHookHandler> logger
-) : IRequestHandler
+) : IScopedRequestHandler
 {
     public async Task<bool> HandleWebhookAsync(
         string rawBody,

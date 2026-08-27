@@ -10,7 +10,7 @@ namespace MarketPlace.Api.Features.Users.ForgotPassword;
 public sealed class ForgotPasswordHandler(
     AppDbContext context,
     VerificationCodeManager verificationCodeManager
-) : IRequestHandler
+) : IScopedRequestHandler
 {
     public async Task<ApiResponse<ForgotPasswordResponse>> HandleAsync(
         ForgotPasswordRequest request,

@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace MarketPlace.Api.Features.ShippingAddresses.CreateShippingAddress;
 
 public sealed class CreateAddressHandler(AppDbContext context, TimeProvider timeProvider)
-    : IRequestHandler
+    : IScopedRequestHandler
 {
     private const int MaxAddressCount = 5;
 

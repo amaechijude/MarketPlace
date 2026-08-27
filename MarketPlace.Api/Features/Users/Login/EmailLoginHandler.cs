@@ -14,7 +14,7 @@ public sealed class EmailLoginHandler(
     AppDbContext context,
     IPasswordHasher<User> hasher,
     VerificationCodeManager verificationCodeManager
-) : IRequestHandler
+) : IScopedRequestHandler
 {
     public async Task<LoginResponse> HandleAsync(
         EmailLoginRequest request,

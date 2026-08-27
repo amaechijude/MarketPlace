@@ -13,7 +13,7 @@ public sealed class ResetPasswordHandler(
     VerificationCodeManager verificationCodeManager,
     IAuthSessionStore authSessionstore,
     IPasswordHasher<User> hasher
-) : IRequestHandler
+) : IScopedRequestHandler
 {
     public async Task<LoginResponse> HandleAsync(
         ResetPasswordRequest request,

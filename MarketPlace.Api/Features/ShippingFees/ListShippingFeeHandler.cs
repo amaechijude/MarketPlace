@@ -8,7 +8,7 @@ using Microsoft.Extensions.Caching.Hybrid;
 namespace MarketPlace.Api.Features.ShippingFees;
 
 public sealed class ListShippingFeeHandler(AppDbContext context, HybridCache hybridCache)
-    : IRequestHandler
+    : IScopedRequestHandler
 {
     public async Task<ApiResponse<ListShippingFeeResponse>> HandleAsync(
         IEnumerable<string> rolesList,

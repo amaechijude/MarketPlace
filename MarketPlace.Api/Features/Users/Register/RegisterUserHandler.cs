@@ -14,7 +14,7 @@ public sealed class RegisterUserHandler(
     VerificationCodeManager verificationCodeManager,
     TimeProvider timeProvider,
     IPasswordHasher<User> hasher
-) : IRequestHandler
+) : IScopedRequestHandler
 {
     public async Task<ApiResponse<RegisterUserResponse>> HandleAsync(
         RegisterUserRequest request,

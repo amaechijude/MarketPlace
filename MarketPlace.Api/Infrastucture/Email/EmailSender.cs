@@ -4,7 +4,7 @@ using MarketPlace.Api.Common.Extensions;
 namespace MarketPlace.Api.Infrastucture.Email;
 
 public sealed class EmailSender(ILogger<EmailSender> logger, IFluentEmail fluentEmail)
-    : IRequestHandler
+    : IScopedRequestHandler
 {
     public async Task SendEmailAsync(EmailMetaData emailMetaData, CancellationToken ct)
     {

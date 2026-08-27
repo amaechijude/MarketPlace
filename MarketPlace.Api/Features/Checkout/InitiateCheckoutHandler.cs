@@ -13,7 +13,7 @@ public sealed class InitiateCheckoutHandler(
     AppDbContext context,
     PaystackApiClient paystackApiClient,
     TimeProvider timeProvider
-) : IRequestHandler
+) : IScopedRequestHandler
 {
     private sealed class CheckoutValidationException(string message) : Exception(message);
 

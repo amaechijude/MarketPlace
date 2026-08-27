@@ -12,7 +12,7 @@ public sealed class UpdateProductHandler(
     AppDbContext context,
     HybridCache hybridCache,
     TimeProvider timeProvider
-) : IRequestHandler
+) : IScopedRequestHandler
 {
     public async Task<ApiResponse<int>> HandleAsync(
         Guid productId,

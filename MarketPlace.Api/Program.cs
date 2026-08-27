@@ -20,7 +20,7 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseDefaultServiceProvider(
-    (context, options) =>
+    (_, options) =>
     {
         options.ValidateScopes = true;
         options.ValidateOnBuild = true;
@@ -122,11 +122,14 @@ app.UseMiddleware<RefreshTokenMiddleware>();
 
 // Antiforgery
 
-// Map endpoints
-app.MapRequestEndpoints();
+
+
 if (app.Environment.IsDevelopment())
     app.MapGet("/", (HttpResponse response) => response.Redirect("/scalar/v1"))
         .ExcludeFromApiReference()
         .ExcludeFromDescription();
+
+// Map endpoints
+app.MapRequestEndpoints();
 
 app.Run();

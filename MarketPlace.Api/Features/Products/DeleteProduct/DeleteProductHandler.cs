@@ -8,7 +8,7 @@ using Microsoft.Extensions.Caching.Hybrid;
 namespace MarketPlace.Api.Features.Products.DeleteProduct;
 
 public sealed class DeleteProductHandler(AppDbContext context, HybridCache hybridCache)
-    : IRequestHandler
+    : IScopedRequestHandler
 {
     public async Task<ApiResponse<int>> HandleAsync(
         Guid userId,

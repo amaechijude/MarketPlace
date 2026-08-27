@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MarketPlace.Api.Features.Carts.ListCartItems;
 
-public sealed class ListCartItemHandler(AppDbContext context) : IRequestHandler
+public sealed class ListCartItemHandler(AppDbContext context) : IScopedRequestHandler
 {
     public async Task<ApiResponse<CursorPagedResponse<CartItemResponse>>> HandleAsync(
         Guid userId,

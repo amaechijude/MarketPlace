@@ -1,5 +1,6 @@
 ﻿using FluentValidation;
 using MarketPlace.Api.Common.ExceptionHandler;
+using MarketPlace.Api.Common.Extensions;
 using MarketPlace.Api.Features.Users.Register;
 using MarketPlace.Test.SetUp;
 using Microsoft.AspNetCore.Diagnostics;
@@ -44,11 +45,45 @@ public sealed class ServiceCollectionTests(CustomWebApplicationFactory factory)
     {
         using var scope = _serviceProvider.CreateScope();
 
-        // Assert that the ProblemDetails services (from AddProblemDetails) are registered
         var exceptionHandler = scope
             .ServiceProvider.GetServices<IExceptionHandler>()
             .FirstOrDefault(s => s is GlobalExceptionHandler);
 
         Assert.NotNull(exceptionHandler);
     }
+
+    [Fact]
+    public void Scanned_handlers_use_their_declared_lifetimes()
+    {
+        var services = new ServiceCollection();
+        var assembly = typeof(ServiceCollectionTests).Assembly;
+
+        services
+            .AddScopedRequestHandlers(assembly)
+            .AddTransientHandlers(assembly)
+            .AddSingletonHandlers(assembly);
+
+        Assert.Equal(
+            ServiceLifetime.Scoped,
+            services.Single(descriptor => descriptor.ServiceType == typeof(ScopedHandler)).Lifetime
+        );
+        Assert.Equal(
+            ServiceLifetime.Transient,
+            services
+                .Single(descriptor => descriptor.ServiceType == typeof(TransientHandler))
+                .Lifetime
+        );
+        Assert.Equal(
+            ServiceLifetime.Singleton,
+            services
+                .Single(descriptor => descriptor.ServiceType == typeof(SingletonHandler))
+                .Lifetime
+        );
+    }
+
+    private sealed class ScopedHandler : IScopedRequestHandler;
+
+    private sealed class TransientHandler : ITransientMarker;
+
+    private sealed class SingletonHandler : ISingletonMarker;
 }

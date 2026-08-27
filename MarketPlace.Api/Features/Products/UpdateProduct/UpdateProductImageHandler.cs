@@ -16,7 +16,7 @@ public sealed class UpdateProductImageHandler(
     TimeProvider timeProvider,
     IValidator<UpdateProductImagesRequest> validator,
     ILogger<UpdateProductImageHandler> logger
-) : IRequestHandler
+) : IScopedRequestHandler
 {
     public async Task<ApiResponse<int>> HandleAsync(
         Guid productId,

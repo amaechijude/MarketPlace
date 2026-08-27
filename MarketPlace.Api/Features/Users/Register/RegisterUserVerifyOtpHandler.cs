@@ -10,7 +10,7 @@ public sealed class RegisterUserVerifyOtpHandler(
     AppDbContext context,
     VerificationCodeManager verificationCodeManager,
     IAuthSessionStore authSessionstore
-) : IRequestHandler
+) : IScopedRequestHandler
 {
     /// <summary>
     /// Verify otp and login

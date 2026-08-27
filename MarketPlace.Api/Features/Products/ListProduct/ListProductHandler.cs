@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MarketPlace.Api.Features.Products.ListProduct;
 
-public sealed class ListProductHandler(AppDbContext context) : IRequestHandler
+public sealed class ListProductHandler(AppDbContext context) : IScopedRequestHandler
 {
     public async Task<ApiResponse<CursorPagedResponse<ListProductResponse>>> HandleAsync(
         ListProductRequest request,
