@@ -36,13 +36,13 @@ public sealed class RefreshTokenMiddleware(
                     if ((session.ExpiresOn - now).TotalDays >= 2)
                         return;
 
-                    var (accessToken, ttl) = await authSessionStore.RefreshSessionAsync(
+                    var (accessToken, expiresOn) = await authSessionStore.RefreshSessionAsync(
                         token,
                         session,
                         context.RequestAborted
                     );
 
-                    context.Response.AttachAccessToken(accessToken, ttl, env);
+                    context.Response.AttachAccessToken(accessToken, expiresOn, env);
                 }
                 catch (Exception ex)
                 {

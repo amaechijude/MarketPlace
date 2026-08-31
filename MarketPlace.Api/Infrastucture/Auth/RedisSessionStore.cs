@@ -12,7 +12,7 @@ public sealed class RedisSessionStore(
 {
     private readonly IDatabase _redis = connectionMultiplexer.GetDatabase();
 
-    public async Task<(string accessToken, TimeSpan ttl)> CreateAsync(
+    public async Task<(string accessToken, DateTimeOffset expiresOn)> CreateAsync(
         Guid userid,
         IEnumerable<string> roles,
         CancellationToken ct
@@ -20,13 +20,17 @@ public sealed class RedisSessionStore(
     {
         var token = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(32));
 
-        var ttl = AuthSessionOptions.DefaultTimeSpan;
-        AuthSessionRecord sessionRecord = new(userid, roles, timeProvider.GetUtcNow().Add(ttl));
+        var expiresOn = timeProvider.GetUtcNow().Add(CustomAuthSchemeOptions.DefaultTimeSpan);
+        AuthSessionRecord sessionRecord = new(userid, roles, expiresOn);
         var json = JsonSerializer.Serialize(sessionRecord);
 
-        await _redis.StringSetAsync(key: HashKey(token), value: json, expiry: ttl);
+        await _redis.StringSetAsync(
+            key: HashKey(token),
+            value: json,
+            expiry: CustomAuthSchemeOptions.DefaultTimeSpan
+        );
 
-        return (token, ttl);
+        return (token, expiresOn);
     }
 
     public async Task<AuthSessionRecord?> GetSessionAsync(string token, CancellationToken ct)
@@ -37,7 +41,7 @@ public sealed class RedisSessionStore(
             : JsonSerializer.Deserialize<AuthSessionRecord>(json.ToString());
     }
 
-    public async Task<(string accessToken, TimeSpan ttl)> RefreshSessionAsync(
+    public async Task<(string accessToken, DateTimeOffset expiresOn)> RefreshSessionAsync(
         string token,
         AuthSessionRecord record,
         CancellationToken ct

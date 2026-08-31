@@ -32,13 +32,13 @@ public sealed class GoogleLoginHandler(
 
         var user = await ResolveUserAsync(payload, cancellationToken);
 
-        var (token, ttl) = await authSessionstore.CreateAsync(
+        var (token, expiresOn) = await authSessionstore.CreateAsync(
             user.Id,
             user.Roles.Select(r => r.Name),
             cancellationToken
         );
 
-        return LoginResponse.Success(token, ttl);
+        return LoginResponse.Success(token, expiresOn);
     }
 
     private async Task<User> ResolveUserAsync(

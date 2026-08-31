@@ -4,7 +4,7 @@
 
   </PropertyGroup>
 
-  <ItemGroup>
+	<ItemGroup>
 	  <PackageReference Include="AWSSDK.S3" />
 	  <PackageReference Include="DotNetEnv" />
 	  <PackageReference Include="FluentEmail.Core" />
@@ -34,6 +34,10 @@
 	  <PackageReference Include="Scalar.AspNetCore" />
     <PackageReference Include="SixLabors.ImageSharp" />
 	  <PackageReference Include="SkiaSharp" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MarketPlace.ServiceDefaults\MarketPlace.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>

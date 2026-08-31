@@ -6,7 +6,7 @@ public static class HttpRequestExtension
 {
     public static string? ExtractToken(this HttpRequest request)
     {
-        _ = request.Cookies.TryGetValue(AuthSessionOptions.CookieKey, out var accessToken);
+        _ = request.Cookies.TryGetValue(CustomAuthSchemeOptions.CookieKey, out var accessToken);
         return accessToken;
 
         // var header = request.Headers.Authorization.ToString();

@@ -10,9 +10,9 @@ public static class AuthServiceCollection
         services
             .AddSingleton<IAuthSessionStore, HybridCacheSessionstore>() // swap for redis
             .AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>()
-            .AddAuthentication(AuthSessionOptions.DefaultAuthenticationScheme)
-            .AddScheme<AuthSessionOptions, AuthSessionHandler>(
-                AuthSessionOptions.DefaultAuthenticationScheme,
+            .AddAuthentication(CustomAuthSchemeOptions.DefaultAuthenticationScheme)
+            .AddScheme<CustomAuthSchemeOptions, AuthSessionHandler>(
+                CustomAuthSchemeOptions.DefaultAuthenticationScheme,
                 _ => { }
             );
         return services;

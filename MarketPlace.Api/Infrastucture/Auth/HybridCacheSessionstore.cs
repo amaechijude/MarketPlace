@@ -7,29 +7,29 @@ namespace MarketPlace.Api.Infrastucture.Auth;
 public sealed class HybridCacheSessionstore(HybridCache hybridCache, TimeProvider timeProvider)
     : IAuthSessionStore
 {
-    public async Task<(string accessToken, TimeSpan ttl)> CreateAsync(
+    public async Task<(string accessToken, DateTimeOffset expiresOn)> CreateAsync(
         Guid userId,
         IEnumerable<string> roles,
         CancellationToken ct
     )
     {
         var token = Convert.ToHexStringLower(RandomNumberGenerator.GetBytes(32));
-        var ttl = AuthSessionOptions.DefaultTimeSpan;
+        var expiresOn = timeProvider.GetUtcNow().Add(CustomAuthSchemeOptions.DefaultTimeSpan);
 
-        var sessionRecord = new AuthSessionRecord(userId, roles, timeProvider.GetUtcNow().Add(ttl));
+        var sessionRecord = new AuthSessionRecord(userId, roles, expiresOn);
 
         await hybridCache.SetAsync(
             key: HashKey(token),
             value: sessionRecord,
             options: new HybridCacheEntryOptions
             {
-                Expiration = ttl,
+                Expiration = CustomAuthSchemeOptions.DefaultTimeSpan,
                 LocalCacheExpiration = TimeSpan.FromMinutes(5),
             },
             cancellationToken: ct
         );
 
-        return (token, ttl);
+        return (token, expiresOn);
     }
 
     public async Task<AuthSessionRecord?> GetSessionAsync(
@@ -42,7 +42,7 @@ public sealed class HybridCacheSessionstore(HybridCache hybridCache, TimeProvide
             cancellationToken: cancellationToken
         );
 
-    public async Task<(string accessToken, TimeSpan ttl)> RefreshSessionAsync(
+    public async Task<(string accessToken, DateTimeOffset expiresOn)> RefreshSessionAsync(
         string token,
         AuthSessionRecord record,
         CancellationToken ct

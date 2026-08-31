@@ -38,7 +38,7 @@ public static class ForgotPasswordEndpoint
                     if (!response.IsSuccess)
                         return Results.Problem(response.Error);
 
-                    httpResponse.AttachAccessToken(response.AccesToken, response.Ttl, env);
+                    httpResponse.AttachAccessToken(response.AccesToken, response.ExpiresOn, env);
 
                     return Results.NoContent();
                 }

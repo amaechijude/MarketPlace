@@ -47,8 +47,8 @@ public sealed class RegisterUserVerifyOtpHandler(
         }
 
         // login
-        var (token, ttl) = await authSessionstore.CreateAsync(user.Id, [], cancellationToken);
+        var (token, expiresOn) = await authSessionstore.CreateAsync(user.Id, [], cancellationToken);
 
-        return LoginResponse.Success(token, ttl);
+        return LoginResponse.Success(token, expiresOn);
     }
 }

@@ -24,13 +24,20 @@ public static class RegisterEndpoint
             .AddEndpointFilter(
                 async (context, next) =>
                 {
+                    var body = context.Arguments.OfType<RegisterUserRequest>().FirstOrDefault();
+                    if (body is null)
+                        return Results.Problem(
+                            $"Missing request body or form {nameof(body)}",
+                            statusCode: 400
+                        );
+
                     var limiter =
                         context.HttpContext.RequestServices.GetRequiredService<TokenBucketLimiter>();
                     var userId =
                         context.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
                     var result = limiter.Allow(
-                        key: userId + "register",
+                        key: userId + "register" + body.Email,
                         capacity: 5,
                         refillRate: 1,
                         refillIntervalSeconds: 60
@@ -59,7 +66,7 @@ public static class RegisterEndpoint
                     var response = await handler.HandleAsync(request, cancellationToken);
                     if (!response.IsSuccess)
                         return Results.Problem(response.Error);
-                    httpResponse.AttachAccessToken(response.AccesToken, response.Ttl, env);
+                    httpResponse.AttachAccessToken(response.AccesToken, response.ExpiresOn, env);
 
                     return Results.NoContent();
                 }

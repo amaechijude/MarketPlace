@@ -27,7 +27,7 @@ public static class LoginEnpoint
                     if (Guid.TryParse(response.AccesToken, out Guid guid))
                         return Results.Ok(new EmailLoginResponse(guid));
 
-                    httpResponse.AttachAccessToken(response.AccesToken, response.Ttl, env);
+                    httpResponse.AttachAccessToken(response.AccesToken, response.ExpiresOn, env);
                     return Results.NoContent();
                 }
             )
@@ -49,7 +49,7 @@ public static class LoginEnpoint
                 if (!response.IsSuccess)
                     return Results.Problem(response.Error, statusCode: 400);
 
-                httpResponse.AttachAccessToken(response.AccesToken, response.Ttl, env);
+                httpResponse.AttachAccessToken(response.AccesToken, response.ExpiresOn, env);
                 return Results.NoContent();
             }
         );
@@ -69,7 +69,7 @@ public static class LoginEnpoint
                     if (!response.IsSuccess)
                         return Results.Problem(response.Error);
 
-                    httpResponse.AttachAccessToken(response.AccesToken, response.Ttl, env);
+                    httpResponse.AttachAccessToken(response.AccesToken, response.ExpiresOn, env);
                     return Results.NoContent();
                 }
             )

@@ -8,16 +8,20 @@ namespace MarketPlace.Api;
 public sealed class StartupCheck(
     IConnectionMultiplexer redis,
     ILogger<StartupCheck> logger,
-    IOptions<SmtpSettings> smtpOptions
+    IOptions<SmtpSettings> smtpOptions,
+    IHostEnvironment env
 ) : IHostedService
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        await PingRedisAsync(cancellationToken)
-            .WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
+        if (env.IsDevelopment() || env.IsProduction())
+        {
+            await PingRedisAsync(cancellationToken)
+                .WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
 
-        await PingEmailServerAsync(cancellationToken)
-            .WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
+            await PingEmailServerAsync(cancellationToken)
+                .WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
+        }
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

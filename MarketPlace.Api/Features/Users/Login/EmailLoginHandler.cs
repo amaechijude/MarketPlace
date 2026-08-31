@@ -37,13 +37,13 @@ public sealed class EmailLoginHandler(
 
         if (user is { EmailConfrimed: true })
         {
-            var (token, ttl) = await authSessionstore.CreateAsync(
+            var (token, expiresOn) = await authSessionstore.CreateAsync(
                 user.Id,
                 user.Roles.Select(r => r.Name),
                 cancellationToken
             );
 
-            return LoginResponse.Success(token, ttl);
+            return LoginResponse.Success(token, expiresOn);
         }
         var otpId = await verificationCodeManager.GenerateAndDispatchOtp(
             user.Id,
@@ -52,7 +52,7 @@ public sealed class EmailLoginHandler(
             cancellationToken
         );
 
-        return LoginResponse.Success(otpId.ToString(), TimeSpan.Zero);
+        return LoginResponse.Success(otpId.ToString(), DateTimeOffset.MinValue);
     }
 
     public async Task<LoginResponse> VerifyOtpAsync(
@@ -86,8 +86,8 @@ public sealed class EmailLoginHandler(
         }
 
         // login
-        var (token, ttl) = await authSessionstore.CreateAsync(user.Id, [], cancellationToken);
+        var (token, expiresOn) = await authSessionstore.CreateAsync(user.Id, [], cancellationToken);
 
-        return LoginResponse.Success(token, ttl);
+        return LoginResponse.Success(token, expiresOn);
     }
 }

@@ -7,11 +7,11 @@ using Microsoft.Extensions.Options;
 namespace MarketPlace.Api.Infrastucture.Auth;
 
 public sealed class AuthSessionHandler(
-    IOptionsMonitor<AuthSessionOptions> options,
+    IOptionsMonitor<CustomAuthSchemeOptions> options,
     ILoggerFactory logger,
     UrlEncoder encoder,
     IAuthSessionStore authSessionstore
-) : AuthenticationHandler<AuthSessionOptions>(options, logger, encoder)
+) : AuthenticationHandler<CustomAuthSchemeOptions>(options, logger, encoder)
 {
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {

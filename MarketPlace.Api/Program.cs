@@ -19,6 +19,8 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddServiceDefaults();
 builder.Host.UseDefaultServiceProvider(
     (_, options) =>
     {
@@ -80,9 +82,7 @@ builder
     .AddPaymentHandlersInfrastructure(builder.Configuration);
 
 //hosted service
-builder
-    .Services.AddHostedService<StartupCheck>()
-    .AddHostedService<VerificationCodeBackgroundDispatcher>();
+builder.Services.AddHostedService<VerificationCodeBackgroundDispatcher>();
 
 // forwadedheaders
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
@@ -91,6 +91,8 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 });
 
 var app = builder.Build();
+
+app.MapDefaultEndpoints();
 
 app.UseForwardedHeaders();
 
