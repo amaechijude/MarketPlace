@@ -1,7 +1,7 @@
-using System.Net.Sockets;
 using MarketPlace.Api.Infrastucture.Email;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
+using System.Net.Sockets;
 
 namespace MarketPlace.Api;
 
@@ -34,9 +34,9 @@ public sealed class StartupCheck(
             using var client = new TcpClient();
             await client.ConnectAsync(smtp.Host, smtp.Port, cancellationToken);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            logger.LogCritical(ex, "Email server is not reachable at startup — aborting.");
+            logger.LogCritical("Email server is not reachable at startup — aborting.");
             throw;
         }
     }
@@ -55,9 +55,9 @@ public sealed class StartupCheck(
                 );
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            logger.LogCritical(ex, "Redis is not reachable at startup — aborting.");
+            logger.LogCritical("Redis is not reachable at startup — aborting.");
             throw;
         }
     }

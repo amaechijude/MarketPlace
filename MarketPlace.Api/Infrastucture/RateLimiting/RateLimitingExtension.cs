@@ -9,9 +9,6 @@ public static class RateLimitingExtension
 {
     public static IServiceCollection AddRateLimitingInfrastructure(this IServiceCollection services)
     {
-        var connectionMultplexer = services
-            .BuildServiceProvider()
-            .GetRequiredService<IConnectionMultiplexer>();
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -51,7 +48,8 @@ public static class RateLimitingExtension
                         partitionKey: GetClientIp(context),
                         factory: _ => new RedisTokenBucketRateLimiterOptions
                         {
-                            ConnectionMultiplexerFactory = () => connectionMultplexer,
+                            ConnectionMultiplexerFactory = () =>
+                                context.RequestServices.GetRequiredService<IConnectionMultiplexer>(),
                             TokenLimit = 5,
                             ReplenishmentPeriod = TimeSpan.FromMinutes(1),
                             TokensPerPeriod = 1,

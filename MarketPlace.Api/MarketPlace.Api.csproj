@@ -36,4 +36,8 @@
 	  <PackageReference Include="SkiaSharp" />
   </ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\MarketPlace.ServiceDefaults\MarketPlace.ServiceDefaults.csproj" />
+	</ItemGroup>
+
 </Project>
