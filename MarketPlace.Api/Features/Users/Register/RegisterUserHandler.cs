@@ -30,22 +30,25 @@ public sealed class RegisterUserHandler(
         var otpId = Guid.Empty;
         if (user is not null)
         {
-            if (user.EmailConfrimed)
-            {
-                return ApiResponse<RegisterUserResponse>.Success(
-                    new RegisterUserResponse(otpId, "Login")
-                );
-            }
-            otpId = await DispatchOtpAsync(user.Id, email, cancellationToken);
-
-            return ApiResponse<RegisterUserResponse>.Success(new RegisterUserResponse(otpId));
+            return ApiResponse<RegisterUserResponse>.Success(
+                new RegisterUserResponse(otpId, "Login")
+            );
         }
 
         var user1 = User.Create(email, timeProvider.GetUtcNow());
         user1.AddPasswordHash(hasher.HashPassword(user1, request.Password));
 
         context.Users.Add(user1);
-        await context.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            return ApiResponse<RegisterUserResponse>.Success(
+                new RegisterUserResponse(otpId, "Login")
+            );
+        }
 
         otpId = await DispatchOtpAsync(user1.Id, email, cancellationToken);
         return ApiResponse<RegisterUserResponse>.Success(new RegisterUserResponse(otpId));

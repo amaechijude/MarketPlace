@@ -5,75 +5,9 @@ using StackExchange.Redis;
 
 namespace MarketPlace.Api.Infrastucture.RateLimiting.Redis;
 
-/// <summary>
-/// Token bucket rate limiter using Redis for distributed rate limiting.
-///
-/// The token bucket maintains a fixed capacity of tokens that refill at a
-/// constant rate. Each request consumes one token. When the bucket is empty,
-/// requests are denied until tokens refill.
-/// </summary>
-/// <example>
-/// <code>
-/// var muxer = ConnectionMultiplexer.Connect("localhost:6379");
-/// var db = muxer.GetDatabase();
-/// var limiter = new TokenBucket(capacity: 10, refillRate: 1, refillInterval: 1.0, db: db);
-/// var result = limiter.Allow("user:123");
-/// if (result.Allowed)
-///     Console.WriteLine($"Request allowed. {result.Remaining} tokens remaining.");
-/// else
-///     Console.WriteLine("Request denied. Rate limit exceeded.");
-/// </code>
-/// </example>
 public sealed class TokenBucketLimiter(IConnectionMultiplexer connectionMultiplexer)
     : ISingletonMarker
 {
-    /// <summary>
-    /// Lua script for atomic token bucket operations.
-    /// All language implementations use this exact script for behavioral consistency.
-    /// </summary>
-    private const string TokenBucketScript = """
-
-        local key = KEYS[1]
-        local capacity = tonumber(ARGV[1])
-        local refill_rate = tonumber(ARGV[2])
-        local refill_interval = tonumber(ARGV[3])
-        local now = tonumber(ARGV[4])
-
-        -- Get current state or initialize
-        local bucket = redis.call('HMGET', key, 'tokens', 'last_refill')
-        local tokens = tonumber(bucket[1])
-        local last_refill = tonumber(bucket[2])
-
-        -- Initialize if this is the first request
-        if tokens == nil then
-            tokens = capacity
-            last_refill = now
-        end
-
-        -- Calculate token refill
-        local time_passed = now - last_refill
-        local refills = math.floor(time_passed / refill_interval)
-
-        if refills > 0 then
-            tokens = math.min(capacity, tokens + (refills * refill_rate))
-            last_refill = last_refill + (refills * refill_interval)
-        end
-
-        -- Try to consume a token
-        local allowed = 0
-        if tokens >= 1 then
-            tokens = tokens - 1
-            allowed = 1
-        end
-
-        -- Update state
-        redis.call('HMSET', key, 'tokens', tokens, 'last_refill', last_refill)
-
-        -- Return result: allowed (1 or 0) and remaining tokens
-        return {allowed, tokens}
-
-        """;
-
     private readonly IDatabase _db = connectionMultiplexer.GetDatabase();
 
     // Calculate SHA1 of the script for EVALSHA
@@ -81,13 +15,13 @@ public sealed class TokenBucketLimiter(IConnectionMultiplexer connectionMultiple
     private bool ScriptLoaded = false;
 
     /// <summary>
-    /// Checks if a request should be allowed for the given key.
+    ///
     /// </summary>
-    /// <param name="key">The rate limit key (e.g., "user:123", "api:endpoint:xyz").</param>
-    /// <returns>
-    /// A <see cref="RateLimitResult"/> containing whether the request is allowed
-    /// and the number of tokens remaining in the bucket.
-    /// </returns>
+    /// <param name="key"></param>
+    /// <param name="capacity"></param>
+    /// <param name="refillRate"></param>
+    /// <param name="refillIntervalSeconds"></param>
+    /// <returns></returns>
     public RateLimitResult Allow(
         string key,
         int capacity,
@@ -141,4 +75,51 @@ public sealed class TokenBucketLimiter(IConnectionMultiplexer connectionMultiple
             // If loading fails, we'll fall back to EVAL
         }
     }
+
+    /// <summary>
+    /// Lua script for atomic token bucket operations.
+    /// All language implementations use this exact script for behavioral consistency.
+    /// </summary>
+    private const string TokenBucketScript = """
+
+        local key = KEYS[1]
+        local capacity = tonumber(ARGV[1])
+        local refill_rate = tonumber(ARGV[2])
+        local refill_interval = tonumber(ARGV[3])
+        local now = tonumber(ARGV[4])
+
+        -- Get current state or initialize
+        local bucket = redis.call('HMGET', key, 'tokens', 'last_refill')
+        local tokens = tonumber(bucket[1])
+        local last_refill = tonumber(bucket[2])
+
+        -- Initialize if this is the first request
+        if tokens == nil then
+            tokens = capacity
+            last_refill = now
+        end
+
+        -- Calculate token refill
+        local time_passed = now - last_refill
+        local refills = math.floor(time_passed / refill_interval)
+
+        if refills > 0 then
+            tokens = math.min(capacity, tokens + (refills * refill_rate))
+            last_refill = last_refill + (refills * refill_interval)
+        end
+
+        -- Try to consume a token
+        local allowed = 0
+        if tokens >= 1 then
+            tokens = tokens - 1
+            allowed = 1
+        end
+
+        -- Update state
+        redis.call('HMSET', key, 'tokens', tokens, 'last_refill', last_refill)
+
+        -- Return result: allowed (1 or 0) and remaining tokens
+        return {allowed, tokens}
+
+        """;
 }

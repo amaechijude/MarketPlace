@@ -73,5 +73,6 @@ public static class RegisterEndpoint
             )
             .WithValidation<RegisterUserVerifyOtpRequest>()
             .Produces(204);
+        ;
     }
 }
