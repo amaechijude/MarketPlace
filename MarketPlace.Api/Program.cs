@@ -20,8 +20,6 @@ using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.AddServiceDefaults();
-
 builder.Host.UseDefaultServiceProvider(
     (_, options) =>
     {
@@ -93,8 +91,6 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 });
 
 var app = builder.Build();
-
-app.MapDefaultEndpoints();
 
 app.UseForwardedHeaders();
 

@@ -4,8 +4,12 @@
   </PropertyGroup>
   <!-- Main project packages -->
   <ItemGroup Label="MarketPlace.Api">
-    <PackageVersion Include="Aspire.Hosting.AppHost" Version="13.5.3" />
-    <PackageVersion Include="Aspire.Hosting.Redis" Version="13.5.3" />
+
+          <!-- aspire -->
+    <PackageVersion Include="Aspire.Hosting.AppHost" Version="13.1.0" />
+    <PackageVersion Include="Aspire.Hosting.Redis" Version="13.1.0" />
+          <!-- aspire -->
+
     <PackageVersion Include="AWSSDK.S3" Version="4.0.102.4" />
     <PackageVersion Include="DotNetEnv" Version="3.2.0" />
     <PackageVersion Include="FluentEmail.Core" Version="3.0.2" />
