@@ -1,7 +1,7 @@
 using MarketPlace.Api.Common.ApiResponseFactory;
 using MarketPlace.Api.Common.Extensions;
 using MarketPlace.Api.Features.Users.Login;
-using MarketPlace.Api.Infrastucture.RateLimiting.Redis;
+using MarketPlace.Api.Infrastucture.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MarketPlace.Api.Features.Users.Register;
@@ -21,35 +21,8 @@ public static class RegisterEndpoint
                     CancellationToken ct
                 ) => (await handler.HandleAsync(request, ct)).ToMinimalApiResult()
             )
-            .AddEndpointFilter(
-                async (context, next) =>
-                {
-                    var body = context.Arguments.OfType<RegisterUserRequest>().FirstOrDefault();
-                    if (body is null)
-                        return Results.Problem(
-                            $"Missing request body or form {nameof(body)}",
-                            statusCode: 400
-                        );
-
-                    var limiter =
-                        context.HttpContext.RequestServices.GetRequiredService<TokenBucketLimiter>();
-                    var userId =
-                        context.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-
-                    var result = limiter.Allow(
-                        key: userId + "register" + body.Email,
-                        capacity: 5,
-                        refillRate: 1,
-                        refillIntervalSeconds: 60
-                    );
-
-                    if (!result.Allowed)
-                        return Results.Problem(statusCode: 429, detail: userId); // Too Many Requests
-
-                    return await next(context);
-                }
-            )
             .WithValidation<RegisterUserRequest>()
+            .RequireRateLimiting(RateLimitPolicyKeys.RegisterTokenBucket)
             .Produces<RegisterUserResponse>();
 
         group
@@ -66,6 +39,7 @@ public static class RegisterEndpoint
                     var response = await handler.HandleAsync(request, cancellationToken);
                     if (!response.IsSuccess)
                         return Results.Problem(response.Error);
+
                     httpResponse.AttachAccessToken(response.AccesToken, response.ExpiresOn, env);
 
                     return Results.NoContent();

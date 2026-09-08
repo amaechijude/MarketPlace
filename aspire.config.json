@@ -1,0 +1,6 @@
+{
+  "appHost": {
+    "language": "csharp",
+    "path": "MarketPlace.AppHost/MarketPlace.AppHost.csproj"
+  }
+}

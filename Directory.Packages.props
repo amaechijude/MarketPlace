@@ -6,7 +6,6 @@
   <ItemGroup Label="MarketPlace.Api">
 
           <!-- aspire -->
-    <PackageVersion Include="Aspire.Hosting.AppHost" Version="13.1.0" />
     <PackageVersion Include="Aspire.Hosting.Redis" Version="13.1.0" />
           <!-- aspire -->
 

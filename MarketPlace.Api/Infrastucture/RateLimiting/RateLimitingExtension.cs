@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Threading.RateLimiting;
+using MarketPlace.Api.Common.Extensions;
 using RedisRateLimiting;
 using StackExchange.Redis;
 
@@ -19,33 +20,14 @@ public static class RateLimitingExtension
                     .Problem(statusCode: StatusCodes.Status429TooManyRequests)
                     .ExecuteAsync(context.HttpContext);
             };
-
-            // login policy
-            options.AddPolicy(
-                policyName: RateLimitPolicyKeys.LoginTokenBucket,
-                context =>
-                    RateLimitPartition.GetTokenBucketLimiter(
-                        // ip address as key
-                        partitionKey: GetClientIp(context),
-                        factory: _ => new TokenBucketRateLimiterOptions
-                        {
-                            TokenLimit = 5,
-                            ReplenishmentPeriod = TimeSpan.FromMinutes(1),
-                            AutoReplenishment = true,
-                            TokensPerPeriod = 1,
-                            QueueLimit = 0,
-                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                        }
-                    )
-            );
             // redis
 
             // redis login policy
             options.AddPolicy(
-                policyName: RateLimitPolicyKeys.RedisLoginTokenBucket,
+                policyName: RateLimitPolicyKeys.LoginTokenBucket,
                 context =>
                     RedisRateLimitPartition.GetTokenBucketRateLimiter(
-                        partitionKey: GetClientIp(context),
+                        partitionKey: GetClientIp("login", context),
                         factory: _ => new RedisTokenBucketRateLimiterOptions
                         {
                             ConnectionMultiplexerFactory = () =>
@@ -61,17 +43,16 @@ public static class RateLimitingExtension
             options.AddPolicy(
                 policyName: RateLimitPolicyKeys.RegisterTokenBucket,
                 context =>
-                    RateLimitPartition.GetTokenBucketLimiter(
+                    RedisRateLimitPartition.GetTokenBucketRateLimiter(
                         // ip address as key
-                        partitionKey: GetClientIp(context),
-                        factory: _ => new TokenBucketRateLimiterOptions
+                        partitionKey: GetClientIp("register", context),
+                        factory: _ => new RedisTokenBucketRateLimiterOptions
                         {
+                            ConnectionMultiplexerFactory = () =>
+                                context.RequestServices.GetRequiredService<IConnectionMultiplexer>(),
                             TokenLimit = 5,
                             ReplenishmentPeriod = TimeSpan.FromMinutes(1),
-                            AutoReplenishment = true,
                             TokensPerPeriod = 1,
-                            QueueLimit = 0,
-                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                         }
                     )
             );
@@ -81,7 +62,7 @@ public static class RateLimitingExtension
                 policyName: RateLimitPolicyKeys.AddressTokenBucket,
                 context =>
                     RateLimitPartition.GetTokenBucketLimiter(
-                        partitionKey: GetUserIdentifier(context),
+                        partitionKey: context.User.UserId,
                         factory: _ => new TokenBucketRateLimiterOptions
                         {
                             TokenLimit = 6,
@@ -98,15 +79,6 @@ public static class RateLimitingExtension
         return services;
     }
 
-    private static string GetClientIp(HttpContext context)
-    {
-        return context.Connection.RemoteIpAddress?.ToString() ?? "anonymous";
-    }
-
-    private static string GetUserIdentifier(HttpContext context)
-    {
-        var user = context.User.FindFirst(ClaimTypes.NameIdentifier);
-
-        return user is null ? "anonymous" : user.Value;
-    }
+    private static string GetClientIp(string prefix, HttpContext context) =>
+        $"{prefix}:{context.Connection.RemoteIpAddress?.ToString()}" ?? "anonymous";
 }

@@ -1,0 +1,20 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.5.3">
+
+  <ItemGroup>
+    <ProjectReference Include="..\MarketPlace.Api\MarketPlace.Api.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AspireUseCliBundle>true</AspireUseCliBundle>
+    <UserSecretsId>1b26842c-18f5-44cf-9ca0-106d6c623929</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.Redis" />
+  </ItemGroup>
+
+</Project>

@@ -5,5 +5,7 @@
     <File Path="Directory.Packages.props" />
   </Folder>
   <Project Path="MarketPlace.Api/MarketPlace.Api.csproj" />
+  <Project Path="MarketPlace.AppHost/MarketPlace.AppHost.csproj" />
+  <Project Path="MarketPlace.ServiceDefaults/MarketPlace.ServiceDefaults.csproj" />
   <Project Path="MarketPlace.Test/MarketPlace.Test.csproj" Id="4b61649f-19a4-4fff-9090-4859222501d3" />
 </Solution>
