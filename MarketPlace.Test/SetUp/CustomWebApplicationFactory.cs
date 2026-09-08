@@ -3,13 +3,35 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 using Testcontainers.PostgreSql;
 using Testcontainers.Redis;
 
 namespace MarketPlace.Test.SetUp;
 
-public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
+public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
+    private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder(
+        "postgres:18-alpine"
+    )
+        .WithDatabase("marketplace")
+        .WithUsername("marketplace")
+        .WithPassword("marketplace")
+        .Build();
+    private readonly RedisContainer _redisContainer = new RedisBuilder("redis:8.6").Build();
+
+    public async Task InitializeAsync()
+    {
+        await Task.WhenAll(_postgresContainer.StartAsync(), _redisContainer.StartAsync());
+
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseNpgsql(_postgresContainer.GetConnectionString())
+            .Options;
+
+        await using var dbContext = new AppDbContext(options);
+        await dbContext.Database.MigrateAsync();
+    }
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureServices(services =>
@@ -21,6 +43,11 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
                         s.ServiceType.FullName != null
                         && s.ServiceType.FullName.Contains("EntityFrameworkCore")
                     )
+                    || s.ServiceType == typeof(IConnectionMultiplexer)
+                    || (
+                        s.ServiceType.FullName != null
+                        && s.ServiceType.FullName.Contains("StackExchange.Redis")
+                    )
                 )
                 .ToList();
 
@@ -29,49 +56,25 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 services.Remove(descriptor);
             }
 
-            // swap with in memory db
-            services.AddDbContext<AppDbContext>(s => s.UseInMemoryDatabase(databaseName: "test"));
+            services.AddDbContext<AppDbContext>(s =>
+                s.UseNpgsql(
+                    _postgresContainer.GetConnectionString(),
+                    npgsqlOptionsAction =>
+                    {
+                        npgsqlOptionsAction.EnableRetryOnFailure(
+                            maxRetryCount: 5,
+                            maxRetryDelay: TimeSpan.FromSeconds(30),
+                            errorCodesToAdd: null
+                        );
+                    }
+                )
+            );
+            services.AddSingleton<IConnectionMultiplexer>(_ =>
+                ConnectionMultiplexer.Connect(_redisContainer.GetConnectionString())
+            );
         });
     }
+
+    Task IAsyncLifetime.DisposeAsync() =>
+        Task.WhenAll(_postgresContainer.StopAsync(), _redisContainer.StopAsync());
 }
-
-// public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
-// {
-//     private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder(
-//         "postgres:18-alpine"
-//     )
-//         .WithDatabase("test")
-//         .WithUsername("admin")
-//         .WithPassword("test")
-//         .Build();
-//     private readonly RedisContainer _redisContainer = new RedisBuilder("redis:8.6").Build();
-
-//     public async Task InitializeAsync()
-//     {
-//         await _postgresContainer.StartAsync();
-//         await _redisContainer.StartAsync();
-//     }
-
-//     // note the "new" keyword — WebApplicationFactory already exposes
-//     // a DisposeAsync() that returns ValueTask; this hides it so xUnit's
-//     // IAsyncLifetime.DisposeAsync() (Task) is the one invoked.
-//     public new async Task DisposeAsync()
-//     {
-//         await _postgresContainer.DisposeAsync();
-//     }
-
-//     protected override void ConfigureWebHost(IWebHostBuilder builder)
-//     {
-//         builder.UseSetting("ConnectionStrings:Database", _postgresContainer.GetConnectionString());
-//         builder.UseSetting("ConnectionStrings:Redis", _redisContainer.GetConnectionString());
-
-//         Environment.SetEnvironmentVariable(
-//             "ConnectionStrings:Database",
-//             _postgresContainer.GetConnectionString()
-//         );
-//         Environment.SetEnvironmentVariable(
-//             "ConnectionStrings:Redis",
-//             _redisContainer.GetConnectionString()
-//         );
-//     }
-// }
