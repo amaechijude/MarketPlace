@@ -20,38 +20,29 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
         .Build();
     private readonly RedisContainer _redisContainer = new RedisBuilder("redis:8.6").Build();
 
-    public async Task InitializeAsync()
-    {
-        await Task.WhenAll(_postgresContainer.StartAsync(), _redisContainer.StartAsync());
+    public Task InitializeAsync() =>
+        Task.WhenAll(_postgresContainer.StartAsync(), _redisContainer.StartAsync());
 
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(_postgresContainer.GetConnectionString())
-            .Options;
+    // var options = new DbContextOptionsBuilder<AppDbContext>()
+    //     .UseNpgsql(_postgresContainer.GetConnectionString())
+    //     .Options;
 
-        await using var dbContext = new AppDbContext(options);
-        await dbContext.Database.MigrateAsync();
-    }
+    // await using var dbContext = new AppDbContext(options);
+    // await dbContext.Database.MigrateAsync();
+
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.ConfigureServices(services =>
+        builder.ConfigureServices(async services =>
         {
-            var dbContextDescriptors = services
+            var serviceDescriptorsToReplace = services
                 .Where(s =>
                     s.ServiceType == typeof(AppDbContext)
-                    || (
-                        s.ServiceType.FullName != null
-                        && s.ServiceType.FullName.Contains("EntityFrameworkCore")
-                    )
                     || s.ServiceType == typeof(IConnectionMultiplexer)
-                    || (
-                        s.ServiceType.FullName != null
-                        && s.ServiceType.FullName.Contains("StackExchange.Redis")
-                    )
                 )
                 .ToList();
 
-            foreach (var descriptor in dbContextDescriptors)
+            foreach (var descriptor in serviceDescriptorsToReplace)
             {
                 services.Remove(descriptor);
             }

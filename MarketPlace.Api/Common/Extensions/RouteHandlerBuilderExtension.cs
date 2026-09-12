@@ -7,7 +7,7 @@ public static class RouteHandlerBuilderExtension
     extension(RouteHandlerBuilder builder)
     {
         public RouteHandlerBuilder WithValidation<TRequest>()
-        {
+        =>
             builder.AddEndpointFilter(
                 async (context, next) =>
                 {
@@ -15,12 +15,6 @@ public static class RouteHandlerBuilderExtension
                     if (body is null)
                         return Results.Problem(
                             $"Missing request body or form {nameof(body)}",
-                            statusCode: 400
-                        );
-
-                    if (body.GetType() != typeof(TRequest))
-                        return Results.Problem(
-                            $"Request body Mismatch between {nameof(TRequest)} and {body.GetType().Name}",
                             statusCode: 400
                         );
 
@@ -38,24 +32,17 @@ public static class RouteHandlerBuilderExtension
 
                     return await next(context);
                 }
-            );
-
-            builder.ProducesValidationProblem();
-            return builder;
-        }
+            )
+            .ProducesValidationProblem();
 
         public RouteHandlerBuilder ProducesResponsesWithProblem<TResponse>(params ReadOnlySpan<int> errorCodes)
         {
             builder.Produces<TResponse>();
 
-            if (errorCodes is not { Length: > 0 })
-                return builder;
-
-            foreach (var code in errorCodes)
-            {
-                builder.ProducesProblem(code);
-            }
+            if (errorCodes is { Length: > 0 })
+                foreach (var code in errorCodes) builder.ProducesProblem(code);
             return builder;
         }
     }
 }
+

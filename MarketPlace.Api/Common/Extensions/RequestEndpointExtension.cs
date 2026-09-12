@@ -31,10 +31,7 @@ public static class RequestEndpointExtension
     public static void MapRequestEndpoints(this WebApplication app)
     {
         var endpoints = app.Services.GetRequiredService<IEnumerable<IRequestEndpoints>>().Reverse();
-
         foreach (var endpoint in endpoints)
-        {
             endpoint.Map(app);
-        }
     }
 }

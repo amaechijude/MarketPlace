@@ -51,7 +51,7 @@ builder
         options.CustomizeProblemDetails = ctx =>
         {
             ctx.ProblemDetails.Instance =
-                $"{ctx.HttpContext.Request.Method} -> {ctx.HttpContext.Request.Path}";
+                $"method: {ctx.HttpContext.Request.Method}. Scheme: {ctx.HttpContext.Request.Scheme}. Path: {ctx.HttpContext.Request.Path}";
             ctx.ProblemDetails.Extensions["timeStamp"] = DateTimeOffset.UtcNow;
         }
     );
@@ -82,13 +82,15 @@ builder
 
 //hosted service
 builder.Services.AddHostedService<VerificationCodeBackgroundDispatcher>();
-builder.Services.AddHostedService<StartupCheck>();
 
 // forwadedheaders
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
 });
+
+if (builder.Environment.IsProduction())
+    builder.Services.AddHostedService<StartupCheck>();
 
 var app = builder.Build();
 
@@ -131,5 +133,4 @@ if (app.Environment.IsDevelopment())
 
 // Map endpoints
 app.MapRequestEndpoints();
-
 app.Run();

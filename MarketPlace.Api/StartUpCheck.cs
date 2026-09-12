@@ -1,27 +1,25 @@
+using System.Net.Sockets;
 using MarketPlace.Api.Infrastucture.Email;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
-using System.Net.Sockets;
 
 namespace MarketPlace.Api;
 
 public sealed class StartupCheck(
     IConnectionMultiplexer redis,
     ILogger<StartupCheck> logger,
-    IOptions<SmtpSettings> smtpOptions,
-    IHostEnvironment env
+    IOptions<SmtpSettings> smtpOptions
 ) : IHostedService
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        if (env.IsDevelopment() || env.IsProduction())
-        {
-            await PingRedisAsync(cancellationToken)
-                .WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
+        IEnumerable<Task> tasks =
+        [
+            PingEmailServerAsync(cancellationToken),
+            PingRedisAsync(cancellationToken),
+        ];
 
-            await PingEmailServerAsync(cancellationToken)
-                .WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
-        }
+        await Task.WhenAll(tasks).WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
