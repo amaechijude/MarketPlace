@@ -1,11 +1,13 @@
 using MarketPlace.Notification;
 
-var builder = WebApplication.CreateSlimBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 builder.Services.AddHostedService<Worker>();
+var app = builder.Build();
 
-var host = builder.Build();
+app.MapDefaultEndpoints();
 
-host.MapDefaultEndpoints();
-host.Run();
+app.MapGet("/", () => "Hello World!");
+
+app.Run();

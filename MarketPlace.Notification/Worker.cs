@@ -1,17 +1,16 @@
-namespace MarketPlace.Notification
+﻿namespace MarketPlace.Notification;
+
+public class Worker(ILogger<Worker> logger) : BackgroundService
 {
-    public class Worker(ILogger<Worker> logger) : BackgroundService
+    private static readonly TimeSpan tick = TimeSpan.FromSeconds(2);
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        using var timer = new PeriodicTimer(tick);
+        while (!stoppingToken.IsCancellationRequested && await timer.WaitForNextTickAsync(stoppingToken))
         {
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                if (logger.IsEnabled(LogLevel.Information))
-                {
-                    logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-                }
-                await Task.Delay(1000, stoppingToken);
-            }
+            if (logger.IsEnabled(LogLevel.Information))
+                logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+
         }
     }
 }
