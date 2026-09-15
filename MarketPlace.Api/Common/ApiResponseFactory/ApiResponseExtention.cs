@@ -5,7 +5,7 @@ public static class ApiResponseExtension
     public static IResult ToMinimalApiResult<T>(this ApiResponse<T> result)
     {
         if (!result.IsSuccess)
-            return Results.Problem(result.Error);
+            return Results.Problem(result.Problem);
 
         if (result.IsNoContent)
             return result.IsCreated ? Results.Created() : Results.NoContent();

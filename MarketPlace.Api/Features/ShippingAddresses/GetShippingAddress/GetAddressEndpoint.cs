@@ -18,16 +18,9 @@ public static class GetAddressEndpoint
                     [FromServices] GetAddressHandler handler,
                     ClaimsPrincipal user,
                     CancellationToken ct
-                ) =>
-                {
-                    var userId = user.UserId;
-                    return userId.IsEmpty
-                        ? Results.Problem(statusCode: StatusCodes.Status401Unauthorized)
-                        : (await handler.HandleAsync(userId, addressId, ct)).ToMinimalApiResult();
-                }
+                ) => (await handler.HandleAsync(user.UserId, addressId, ct)).ToMinimalApiResult()
             )
             .RequireAuthorization()
-            .Produces<AddressResponse>()
-            .ProducesProblem(404);
+            .ProducesResponseWithProblem<AddressResponse>(401, 404);
     }
 }

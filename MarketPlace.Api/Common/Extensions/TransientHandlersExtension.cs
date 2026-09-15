@@ -11,7 +11,7 @@ public static class TransientHandlersExtension
         )
         {
             var type = typeof(ITransientMarker);
-            
+
             var handlers = assembly
                 .GetTypes()
                 .Where(t =>

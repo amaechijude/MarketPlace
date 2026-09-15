@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MarketPlace.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class Init : Migration
+    public partial class InitMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -279,8 +279,7 @@ namespace MarketPlace.Api.Migrations
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Quantity = table.Column<int>(type: "integer", nullable: false),
                     CartId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ProductVariantId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ProductVariantId1 = table.Column<Guid>(type: "uuid", nullable: true)
+                    ProductVariantId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -297,11 +296,6 @@ namespace MarketPlace.Api.Migrations
                         principalTable: "ProductVariants",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_CartItems_ProductVariants_ProductVariantId1",
-                        column: x => x.ProductVariantId1,
-                        principalTable: "ProductVariants",
-                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -343,11 +337,6 @@ namespace MarketPlace.Api.Migrations
                 name: "IX_CartItems_ProductVariantId",
                 table: "CartItems",
                 column: "ProductVariantId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_CartItems_ProductVariantId1",
-                table: "CartItems",
-                column: "ProductVariantId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Carts_UserId",

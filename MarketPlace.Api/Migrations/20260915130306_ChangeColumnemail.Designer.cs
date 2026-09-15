@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MarketPlace.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260827152631_CartItem")]
-    partial class CartItem
+    [Migration("20260915130306_ChangeColumnemail")]
+    partial class ChangeColumnemail
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

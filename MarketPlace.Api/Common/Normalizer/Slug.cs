@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using MarketPlace.Api.Common.ExceptionHandler;
 
 namespace MarketPlace.Api.Common.Normalizer;

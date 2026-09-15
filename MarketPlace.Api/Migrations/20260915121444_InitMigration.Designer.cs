@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MarketPlace.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260908163028_Test")]
-    partial class Test
+    [Migration("20260915121444_InitMigration")]
+    partial class InitMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

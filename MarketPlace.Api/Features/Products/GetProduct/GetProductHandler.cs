@@ -17,7 +17,7 @@ public sealed class GetProductHandler(AppDbContext context, HybridCache hybridCa
         CancellationToken cancellationToken
     )
     {
-        var product = await hybridCache.GetOrCreateAsync<GetProductResponse?>(
+        var product = await hybridCache.GetOrCreateAsync(
             key: CacheKeys.Product(productId),
             factory: async ct =>
                 await context

@@ -2,24 +2,21 @@
 using MarketPlace.Api.Common.ExceptionHandler;
 using MarketPlace.Api.Common.Extensions;
 using MarketPlace.Api.Features.Users.Register;
-using MarketPlace.Test.SetUp;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Validation;
 
-namespace MarketPlace.Test.IntegrationTest;
+namespace MarketPlace.Test.IntegrationTest.SetUp;
 
 public sealed class ServiceCollectionTests(CustomWebApplicationFactory factory)
-    : IClassFixture<CustomWebApplicationFactory>
+    : BaseIntegrationTest(factory)
 {
-    private readonly IServiceProvider _serviceProvider = factory.Services;
-
     [Fact]
     public void Validation_ShouldBeRegistered()
     {
-        using var scope = _serviceProvider.CreateScope();
+        //using var scope = _serviceProvider.CreateScope();
 
         // 1. Assert FluentValidation model validation registration (e.g. RegisterRequestValidator)
         var registerValidator = scope.ServiceProvider.GetService<IValidator<RegisterUserRequest>>();
@@ -33,7 +30,7 @@ public sealed class ServiceCollectionTests(CustomWebApplicationFactory factory)
     [Fact]
     public void ProblemDetailsS_ShouldBeRegistered()
     {
-        using var scope = _serviceProvider.CreateScope();
+        //using var scope = _serviceProvider.CreateScope();
 
         // Assert that the ProblemDetails services (from AddProblemDetails) are registered
         var problemDetailsService = scope.ServiceProvider.GetService<IProblemDetailsService>();
@@ -43,7 +40,7 @@ public sealed class ServiceCollectionTests(CustomWebApplicationFactory factory)
     [Fact]
     public void ExceptionHandler_ShouldBeRegistered()
     {
-        using var scope = _serviceProvider.CreateScope();
+        //using var scope = _serviceProvider.CreateScope();
 
         var exceptionHandler = scope
             .ServiceProvider.GetServices<IExceptionHandler>()

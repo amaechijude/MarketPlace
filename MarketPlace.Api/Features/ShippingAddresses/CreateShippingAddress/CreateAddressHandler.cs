@@ -17,6 +17,9 @@ public sealed class CreateAddressHandler(AppDbContext context, TimeProvider time
         CancellationToken cancellationToken
     )
     {
+        if (userId.IsEmpty)
+            return ApiResponse<AddressResponse>.Unauthorized();
+
         var user = await context
             .Users.AsNoTracking()
             .Where(u => u.Id == userId)

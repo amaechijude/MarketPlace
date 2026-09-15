@@ -5,7 +5,7 @@
 namespace MarketPlace.Api.Migrations
 {
     /// <inheritdoc />
-    public partial class Test : Migration
+    public partial class ChangeColumn : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

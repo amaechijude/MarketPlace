@@ -23,4 +23,7 @@ public static class HttpResponseExtension
             }
         );
     }
+
+    public static void AttachRetryAfterHeader(this HttpResponse response, double seconds) =>
+        response.Headers.TryAdd("x-rate-limit-retry-after", $"{seconds} seconds");
 }

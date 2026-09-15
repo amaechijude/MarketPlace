@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using MarketPlace.Api.Common.ApiResponseFactory;
 using MarketPlace.Api.Common.Extensions;
+using MarketPlace.Api.Infrastucture.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MarketPlace.Api.Features.ShippingAddresses.CreateShippingAddress;
@@ -16,18 +17,11 @@ public static class CreateAddressEndpoint
                     [FromBody] CreateAddressRequest request,
                     [FromServices] CreateAddressHandler handler,
                     ClaimsPrincipal user,
-                    CancellationToken cancellationToken
-                ) =>
-                {
-                    var userId = user.UserId;
-                    return userId.IsEmpty
-                        ? Results.Problem(statusCode: StatusCodes.Status401Unauthorized)
-                        : (
-                            await handler.HandleAsync(userId, request, cancellationToken)
-                        ).ToMinimalApiResult();
-                }
+                    CancellationToken ct
+                ) => (await handler.HandleAsync(user.UserId, request, ct)).ToMinimalApiResult()
             )
             .RequireAuthorization()
+            .RequireRateLimiting(RateLimitPolicyKeys.AddressTokenBucket)
             .WithValidation<CreateAddressRequest>()
             .Produces<AddressResponse>();
     }

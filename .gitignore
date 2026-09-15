@@ -6,6 +6,8 @@
 # dotenv files
 .env
 
+*/ouput/*
+
 # User-specific files
 *.rsuser
 *.suo
@@ -481,4 +483,5 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 MarketPlace.Api/appsettings.json
-.template.config/template.json
+
+MarketPlace.Api/output/*

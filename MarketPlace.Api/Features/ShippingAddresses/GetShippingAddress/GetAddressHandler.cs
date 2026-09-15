@@ -1,6 +1,8 @@
+using System.Linq.Expressions;
 using MarketPlace.Api.Common.ApiResponseFactory;
 using MarketPlace.Api.Common.Extensions;
 using MarketPlace.Api.Domain.DatabaseContext;
+using MarketPlace.Api.Domain.Entities;
 using MarketPlace.Api.Features.ShippingAddresses.CreateShippingAddress;
 using MarketPlace.Api.Infrastucture.Cache;
 using Microsoft.EntityFrameworkCore;
@@ -17,22 +19,16 @@ public sealed class GetAddressHandler(AppDbContext context, HybridCache hybridCa
         CancellationToken cancellationToken
     )
     {
-        var address = await hybridCache.GetOrCreateAsync<AddressResponse?>(
+        if (userId.IsEmpty)
+            return ApiResponse<AddressResponse>.Unauthorized();
+
+        var address = await hybridCache.GetOrCreateAsync(
             key: CacheKeys.Address(userId),
             factory: async ct =>
                 await context
                     .ShippingAddresses.AsNoTracking()
                     .Where(s => s.Id == addressId && s.UserId == userId)
-                    .Select(s => new AddressResponse(
-                        s.Id,
-                        s.FirstName,
-                        s.LastName,
-                        s.Phone,
-                        s.Address,
-                        s.Landmark,
-                        s.City,
-                        s.State
-                    ))
+                    .Select(MapAddress)
                     .FirstOrDefaultAsync(ct),
             options: new HybridCacheEntryOptions
             {
@@ -45,4 +41,16 @@ public sealed class GetAddressHandler(AppDbContext context, HybridCache hybridCa
             ? ApiResponse<AddressResponse>.Success(address)
             : ApiResponse<AddressResponse>.NotFound("Address not found");
     }
+
+    private static readonly Expression<Func<ShippingAddress, AddressResponse>> MapAddress =
+        s => new AddressResponse(
+            s.Id,
+            s.FirstName,
+            s.LastName,
+            s.Phone,
+            s.Address,
+            s.Landmark,
+            s.City,
+            s.State
+        );
 }

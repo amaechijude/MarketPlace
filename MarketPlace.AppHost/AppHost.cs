@@ -7,4 +7,6 @@ var redis = builder
 
 builder.AddProject<Projects.MarketPlace_Api>("marketplace-api").WaitFor(redis).WithReference(redis);
 
+builder.AddProject<Projects.MarketPlace_Notification>("marketplace-notification");
+
 builder.Build().Run();

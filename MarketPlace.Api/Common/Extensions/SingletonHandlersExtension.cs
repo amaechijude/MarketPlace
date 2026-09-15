@@ -12,7 +12,7 @@ public static class SingletonHandlersExtension
         )
         {
             var type = typeof(ISingletonMarker);
-            
+
             var handlers = assembly
                 .GetTypes()
                 .Where(t =>

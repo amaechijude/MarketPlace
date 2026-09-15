@@ -1,14 +1,25 @@
-@MarketPlaceApi_HostAddress = http://localhost:5177
+@MarketPlaceApi_HostAddress = https://localhost:7071
 
 
 GET {{MarketPlaceApi_HostAddress}}
 Accept: application/json
 
 ###
-POST {{MarketPlaceApi_HostAddress}}/users/register
+POST {{MarketPlaceApi_HostAddress}}/auth/login/email
 Content-Type: application/json
 
 {
     "email": "testuser@gmail.com",
     "password": "Password@21123"
 }
+
+###
+POST {{MarketPlaceApi_HostAddress}}/auth/login/verify-otp
+Content-Type: application/json
+
+{
+  "otpId": "e1d6c991-e165-4d1f-933b-4d49986c51eb",
+  "otpInput": "602980"
+}
+###
+GET {{MarketPlaceApi_HostAddress}}/redis/emailslll

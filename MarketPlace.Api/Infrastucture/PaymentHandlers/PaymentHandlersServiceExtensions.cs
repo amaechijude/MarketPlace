@@ -1,6 +1,8 @@
+using System.Net;
 using System.Net.Http.Headers;
 using MarketPlace.Api.Infrastucture.PaymentHandlers.Paystack;
 using Microsoft.Extensions.Options;
+using Polly;
 
 namespace MarketPlace.Api.Infrastucture.PaymentHandlers;
 
@@ -39,7 +41,23 @@ public static class PaymentHandlersServiceExtensions
                     client.Timeout = TimeSpan.FromSeconds(30);
                 }
             )
-            .AddStandardResilienceHandler();
+            .AddStandardResilienceHandler(options =>
+            {
+                // retry
+                options.Retry.UseJitter = true;
+                options.Retry.BackoffType = Polly.DelayBackoffType.Exponential;
+                options.Retry.Delay = TimeSpan.FromMilliseconds(300);
+                options.Retry.ShouldHandle = args =>
+                    args.Outcome.Result switch
+                    {
+                        {
+                            StatusCode: HttpStatusCode.BadRequest
+                                or HttpStatusCode.Unauthorized
+                                or HttpStatusCode.Forbidden
+                        } => PredicateResult.False(),
+                        _ => PredicateResult.True(),
+                    };
+            });
 
         return services;
     }

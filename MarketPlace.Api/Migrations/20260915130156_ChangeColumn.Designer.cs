@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MarketPlace.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260826145324_Init")]
-    partial class Init
+    [Migration("20260915130156_ChangeColumn")]
+    partial class ChangeColumn
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -54,9 +54,6 @@ namespace MarketPlace.Api.Migrations
                     b.Property<Guid>("ProductVariantId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid?>("ProductVariantId1")
-                        .HasColumnType("uuid");
-
                     b.Property<int>("Quantity")
                         .HasColumnType("integer");
 
@@ -65,8 +62,6 @@ namespace MarketPlace.Api.Migrations
                     b.HasIndex("CartId");
 
                     b.HasIndex("ProductVariantId");
-
-                    b.HasIndex("ProductVariantId1");
 
                     b.ToTable("CartItems", (string)null);
                 });
@@ -553,14 +548,10 @@ namespace MarketPlace.Api.Migrations
                         .IsRequired();
 
                     b.HasOne("MarketPlace.Api.Domain.Entities.ProductVariant", "ProductVariant")
-                        .WithMany()
+                        .WithMany("CartItems")
                         .HasForeignKey("ProductVariantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("MarketPlace.Api.Domain.Entities.ProductVariant", null)
-                        .WithMany("CartItems")
-                        .HasForeignKey("ProductVariantId1");
 
                     b.Navigation("Cart");
 

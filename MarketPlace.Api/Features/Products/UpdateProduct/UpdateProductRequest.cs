@@ -1,4 +1,3 @@
-using System.Text.Json.Serialization;
 using FluentValidation;
 
 namespace MarketPlace.Api.Features.Products.UpdateProduct;

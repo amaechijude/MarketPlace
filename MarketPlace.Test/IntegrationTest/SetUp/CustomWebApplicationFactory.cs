@@ -7,7 +7,7 @@ using StackExchange.Redis;
 using Testcontainers.PostgreSql;
 using Testcontainers.Redis;
 
-namespace MarketPlace.Test.SetUp;
+namespace MarketPlace.Test.IntegrationTest.SetUp;
 
 public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
@@ -20,16 +20,10 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
         .Build();
     private readonly RedisContainer _redisContainer = new RedisBuilder("redis:8.6").Build();
 
-    public Task InitializeAsync() =>
-        Task.WhenAll(_postgresContainer.StartAsync(), _redisContainer.StartAsync());
-
-    // var options = new DbContextOptionsBuilder<AppDbContext>()
-    //     .UseNpgsql(_postgresContainer.GetConnectionString())
-    //     .Options;
-
-    // await using var dbContext = new AppDbContext(options);
-    // await dbContext.Database.MigrateAsync();
-
+    public async Task InitializeAsync()
+    {
+        await Task.WhenAll(_postgresContainer.StartAsync(), _redisContainer.StartAsync());
+    }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -39,6 +33,15 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 .Where(s =>
                     s.ServiceType == typeof(AppDbContext)
                     || s.ServiceType == typeof(IConnectionMultiplexer)
+                    || (
+                        s.ServiceType.FullName != null
+                        && (
+                            s.ServiceType.FullName.Contains(
+                                "EntityFrameworkCore",
+                                StringComparison.OrdinalIgnoreCase
+                            )
+                        )
+                    )
                 )
                 .ToList();
 

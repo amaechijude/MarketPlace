@@ -36,7 +36,7 @@ public static class ForgotPasswordEndpoint
                 {
                     LoginResponse response = await handler.HandleAsync(request, cancellationToken);
                     if (!response.IsSuccess)
-                        return Results.Problem(response.Error);
+                        return Results.Problem(response.Problem);
 
                     httpResponse.AttachAccessToken(response.AccesToken, response.ExpiresOn, env);
 

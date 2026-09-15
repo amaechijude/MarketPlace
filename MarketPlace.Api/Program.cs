@@ -15,10 +15,14 @@ using MarketPlace.Api.Infrastucture.MediaStorage;
 using MarketPlace.Api.Infrastucture.OtpValidation;
 using MarketPlace.Api.Infrastucture.PaymentHandlers;
 using MarketPlace.Api.Infrastucture.RateLimiting;
+using MarketPlace.Api.Infrastucture.RateLimiting.Redis;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Mvc;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.AddServiceDefaults();
 
 builder.Host.UseDefaultServiceProvider(
     (_, options) =>
@@ -51,7 +55,7 @@ builder
         options.CustomizeProblemDetails = ctx =>
         {
             ctx.ProblemDetails.Instance =
-                $"method: {ctx.HttpContext.Request.Method}. Scheme: {ctx.HttpContext.Request.Scheme}. Path: {ctx.HttpContext.Request.Path}";
+                $"{ctx.HttpContext.Request.Method} {ctx.HttpContext.Request.Scheme} {ctx.HttpContext.Request.Path}";
             ctx.ProblemDetails.Extensions["timeStamp"] = DateTimeOffset.UtcNow;
         }
     );
@@ -76,12 +80,12 @@ builder
     .AddCacheInfrastructure(builder.Configuration) //cache
     .AddDatabaseInfrastructure(builder.Configuration) // db
     .AddEmailInfrastructure(builder.Environment) // email
-    .AddRateLimitingInfrastructure() // ratelimit
+    .AddRateLimitingInfrastructure(builder.Configuration) // ratelimit
     .AddMediaStorageInfrastructure(builder.Configuration) // r2
-    .AddPaymentHandlersInfrastructure(builder.Configuration);
+    .AddPaymentHandlersInfrastructure(builder.Configuration)
+    .AddOtpInfrastructure();
 
 //hosted service
-builder.Services.AddHostedService<VerificationCodeBackgroundDispatcher>();
 
 // forwadedheaders
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
@@ -93,6 +97,7 @@ if (builder.Environment.IsProduction())
     builder.Services.AddHostedService<StartupCheck>();
 
 var app = builder.Build();
+app.MapDefaultEndpoints();
 
 app.UseForwardedHeaders();
 
@@ -133,4 +138,23 @@ if (app.Environment.IsDevelopment())
 
 // Map endpoints
 app.MapRequestEndpoints();
+app.MapGet(
+        "/redis/{email}",
+        async (
+            [FromRoute] string email,
+            HttpResponse response,
+            [FromKeyedServices(EmailAddresTokenBucketOptions.Key)] ITokenBucketLimiter rate
+        ) =>
+        {
+            var result = await rate.AllowAsync(email);
+            if (!result.Allowed)
+            {
+                response.AttachRetryAfterHeader(result.RetryAfter);
+                return Results.Problem(statusCode: StatusCodes.Status429TooManyRequests);
+            }
+            return Results.Ok(result);
+        }
+    )
+    .WithIpAddressRateLimiter("redis")
+    .WithTags("redis");
 app.Run();

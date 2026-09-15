@@ -8,7 +8,7 @@ public sealed class ApiResponse<T>
     public bool IsNoContent { get; }
     public bool IsCreated { get; }
     public T? Data { get; }
-    public ProblemDetails Error { get; } = new() { Status = 400 };
+    public ProblemDetails Problem { get; } = new() { Status = 400 };
 
     private ApiResponse(T data)
     {
@@ -28,7 +28,7 @@ public sealed class ApiResponse<T>
             problemDetails.Extensions["errors"] = error.Fields;
 
         IsSuccess = false;
-        Error = problemDetails;
+        Problem = problemDetails;
     }
 
     private ApiResponse(bool isCreated)

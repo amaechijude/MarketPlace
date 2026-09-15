@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MarketPlace.Api\MarketPlace.Api.csproj" />
+    <ProjectReference Include="..\MarketPlace.Notification\MarketPlace.Notification.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

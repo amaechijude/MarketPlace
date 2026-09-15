@@ -1,7 +1,5 @@
 using MarketPlace.Api.Common.ApiResponseFactory;
 using MarketPlace.Api.Common.Extensions;
-using MarketPlace.Api.Features.Users.Login;
-using MarketPlace.Api.Infrastucture.RateLimiting;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MarketPlace.Api.Features.Users.Register;
@@ -22,7 +20,6 @@ public static class RegisterEndpoint
                 ) => (await handler.HandleAsync(request, ct)).ToMinimalApiResult()
             )
             .WithValidation<RegisterUserRequest>()
-            .RequireRateLimiting(RateLimitPolicyKeys.RegisterTokenBucket)
             .Produces<RegisterUserResponse>();
 
         group
@@ -38,7 +35,7 @@ public static class RegisterEndpoint
                 {
                     var response = await handler.HandleAsync(request, cancellationToken);
                     if (!response.IsSuccess)
-                        return Results.Problem(response.Error);
+                        return Results.Problem(response.Problem);
 
                     httpResponse.AttachAccessToken(response.AccesToken, response.ExpiresOn, env);
 

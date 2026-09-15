@@ -1,4 +1,7 @@
 using MarketPlace.Api.Common.Extensions;
+using MarketPlace.Api.Common.Normalizer;
+using MarketPlace.Api.Infrastucture.RateLimiting;
+using MarketPlace.Api.Infrastucture.RateLimiting.Redis;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MarketPlace.Api.Features.Users.Login;
@@ -14,15 +17,23 @@ public static class LoginEnpoint
                 "email",
                 async (
                     [FromBody] EmailLoginRequest request,
+                    [FromKeyedServices(EmailAddresTokenBucketOptions.Key)] ITokenBucketLimiter emailRateLimiter,
                     [FromServices] EmailLoginHandler handler,
                     IWebHostEnvironment env,
                     HttpResponse httpResponse,
                     CancellationToken cancellation
                 ) =>
                 {
-                    LoginResponse response = await handler.HandleAsync(request, cancellation);
+                    var result = await emailRateLimiter.AllowAsync(EmailNormalizer.Normalize(request.Email));
+                    if (!result.Allowed)
+                    {
+                        httpResponse.AttachRetryAfterHeader(result.RetryAfter);
+                        return Results.Problem(statusCode: StatusCodes.Status429TooManyRequests);
+
+                    }
+                    var response = await handler.HandleAsync(request, cancellation);
                     if (!response.IsSuccess)
-                        return Results.Problem(response.Error, statusCode: 400);
+                        return Results.Problem(response.Problem);
 
                     if (Guid.TryParse(response.AccesToken, out Guid guid))
                         return Results.Ok(new EmailLoginResponse(guid));
@@ -32,6 +43,7 @@ public static class LoginEnpoint
                 }
             )
             .WithValidation<EmailLoginRequest>()
+            .WithIpAddressRateLimiter("login")
             .Produces(204)
             .Produces<EmailLoginResponse>(202);
 
@@ -47,7 +59,7 @@ public static class LoginEnpoint
             {
                 LoginResponse response = await handler.VerifyOtpAsync(request, cancellationToken);
                 if (!response.IsSuccess)
-                    return Results.Problem(response.Error, statusCode: 400);
+                    return Results.Problem(response.Problem);
 
                 httpResponse.AttachAccessToken(response.AccesToken, response.ExpiresOn, env);
                 return Results.NoContent();
@@ -67,7 +79,7 @@ public static class LoginEnpoint
                 {
                     LoginResponse response = await handler.HandleAsync(request, cancellationToken);
                     if (!response.IsSuccess)
-                        return Results.Problem(response.Error);
+                        return Results.Problem(response.Problem);
 
                     httpResponse.AttachAccessToken(response.AccesToken, response.ExpiresOn, env);
                     return Results.NoContent();
