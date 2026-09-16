@@ -12,7 +12,7 @@ public sealed class VendorConfigurations : IEntityTypeConfiguration<Vendor>
 
         builder.HasKey(v => v.Id);
         builder.HasIndex(v => v.Email).IsUnique();
-        builder.HasIndex(v => v.Name).IsUnique();
+        builder.HasIndex(v => v.BusinessName).IsUnique();
 
         // Vendor Product relationship
         builder

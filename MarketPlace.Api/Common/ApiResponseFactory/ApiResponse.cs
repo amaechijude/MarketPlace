@@ -50,6 +50,9 @@ public sealed class ApiResponse<T>
     public static ApiResponse<T> BadRequest(string message) =>
         Failure(new ApiError(message, StatusCodes.Status400BadRequest));
 
+    public static ApiResponse<T> Conflict(string message) =>
+        Failure(new ApiError(message, StatusCodes.Status409Conflict));
+
     public static ApiResponse<T> ValidationProblem(IDictionary<string, string[]> result) =>
         Failure(
             new ApiError("One Or more validation Failed", StatusCodes.Status400BadRequest, result)

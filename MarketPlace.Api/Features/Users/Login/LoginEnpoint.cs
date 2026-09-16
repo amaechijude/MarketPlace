@@ -17,19 +17,21 @@ public static class LoginEnpoint
                 "email",
                 async (
                     [FromBody] EmailLoginRequest request,
-                    [FromKeyedServices(EmailAddresTokenBucketOptions.Key)] ITokenBucketLimiter emailRateLimiter,
+                    [FromKeyedServices(EmailAddresTokenBucketOptions.Key)]
+                        ITokenBucketLimiter emailRateLimiter,
                     [FromServices] EmailLoginHandler handler,
                     IWebHostEnvironment env,
                     HttpResponse httpResponse,
                     CancellationToken cancellation
                 ) =>
                 {
-                    var result = await emailRateLimiter.AllowAsync(EmailNormalizer.Normalize(request.Email));
+                    var result = await emailRateLimiter.AllowAsync(
+                        EmailNormalizer.Normalize(request.Email)
+                    );
                     if (!result.Allowed)
                     {
                         httpResponse.AttachRetryAfterHeader(result.RetryAfter);
                         return Results.Problem(statusCode: StatusCodes.Status429TooManyRequests);
-
                     }
                     var response = await handler.HandleAsync(request, cancellation);
                     if (!response.IsSuccess)
@@ -86,6 +88,7 @@ public static class LoginEnpoint
                 }
             )
             .WithValidation<GoogleLoginRequest>()
+            .WithIpAddressRateLimiter("google")
             .Produces(204);
     }
 }

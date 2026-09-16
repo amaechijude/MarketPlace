@@ -8,37 +8,23 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MarketPlace.Api.Features.Vendors.Handlers;
 
-/// <summary>
-/// Handler for vendor onboarding/registration requests.
-/// Orchestrates the vendor creation process, role assignment, and database persistence.
-/// </summary>
-public sealed class VendorOnboardingHandler(AppDbContext context, TimeProvider timeProvider)
-    : IScopedRequestHandler
+public sealed class VendorOnboardingHandler(
+    AppDbContext context,
+    TimeProvider timeProvider,
+    ILogger<VendorOnboardingHandler> logger
+) : IScopedRequestHandler
 {
-    /// <summary>
-    /// Processes a vendor onboarding request.
-    /// Creates vendor record, assigns Vendor role to user, and persists changes.
-    /// </summary>
-    /// <param name="userId">ID of the user registering as a vendor.</param>
-    /// <param name="request">Onboarding request containing vendor information.</param>
-    /// <param name="cancellationToken">Cancellation token for async operations.</param>
-    /// <returns>API response containing vendor onboarding result or error details.</returns>
     public async Task<ApiResponse<VendorOnboardingResponse>> HandleAsync(
         Guid userId,
         VendorOnboardingRequest request,
         CancellationToken cancellationToken
     )
     {
-        // Verify user exists
-        var user = await context
-            .Users.AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
-
+        var user = await context.Users.FindAsync(userId, cancellationToken);
         if (user is null)
             return ApiResponse<VendorOnboardingResponse>.NotFound(
-                "User account not found. Please ensure you are logged in."
+                "User not found. Please ensure you are logged in."
             );
-
         // Check if user already has a vendor account
         var existingVendor = await context
             .Vendors.AsNoTracking()
@@ -52,10 +38,7 @@ public sealed class VendorOnboardingHandler(AppDbContext context, TimeProvider t
         // Check if store slug is already taken
         var slugTaken = await context
             .Vendors.AsNoTracking()
-            .AnyAsync(
-                v => v.StoreSlug == request.StoreSlug.ToLowerInvariant(),
-                cancellationToken
-            );
+            .AnyAsync(v => v.StoreSlug == request.StoreSlug.ToLowerInvariant(), cancellationToken);
 
         if (slugTaken)
             return ApiResponse<VendorOnboardingResponse>.Conflict(
@@ -104,21 +87,37 @@ public sealed class VendorOnboardingHandler(AppDbContext context, TimeProvider t
             }
 
             if (!string.IsNullOrWhiteSpace(request.BusinessRegistrationNumber))
-                vendor = vendor with
-                {
-                    BusinessRegistrationNumber = request.BusinessRegistrationNumber,
-                };
+                vendor.UpdateBusinessRegistrationNumber(
+                    request.BusinessRegistrationNumber,
+                    userId,
+                    now
+                );
 
             // Persist vendor to database
             context.Vendors.Add(vendor);
 
             // Assign Vendor role to user
-            await AssignVendorRoleAsync(user, cancellationToken);
+            // Get or create the Vendor role
+            var vendorRole = await context.Roles.FirstOrDefaultAsync(
+                r => r.Name == CustomAppRoles.Vendor,
+                cancellationToken
+            );
+
+            if (vendorRole is null)
+            {
+                // Create the Vendor role if it doesn't exist (fallback for seeding issues)
+                vendorRole = Role.Create(CustomAppRoles.Vendor, Guid.Empty);
+                context.Roles.Add(vendorRole);
+            }
+
+            // Add role to user if not already assigned
+            if (!user.Roles.Any(r => r.Name == CustomAppRoles.Vendor))
+                user.Roles.Add(vendorRole);
 
             // Save all changes atomically
             await context.SaveChangesAsync(cancellationToken);
 
-            return ApiResponse<VendorOnboardingResponse>.Created(
+            return ApiResponse<VendorOnboardingResponse>.Success(
                 new VendorOnboardingResponse(
                     vendor.Id,
                     vendor.UserId,
@@ -132,37 +131,14 @@ public sealed class VendorOnboardingHandler(AppDbContext context, TimeProvider t
         }
         catch (DbUpdateException ex)
         {
+            logger.LogError(
+                ex,
+                "Database update error during vendor onboarding for user {UserId}",
+                userId
+            );
             return ApiResponse<VendorOnboardingResponse>.BadRequest(
                 "An error occurred while registering your vendor account. Please try again later."
             );
-        }
-    }
-
-    /// <summary>
-    /// Assigns the Vendor role to a user.
-    /// Ensures the role exists and creates the user-role relationship.
-    /// </summary>
-    private async Task AssignVendorRoleAsync(User user, CancellationToken cancellationToken)
-    {
-        // Get or create the Vendor role
-        var vendorRole = await context
-            .Roles.FirstOrDefaultAsync(
-                r => r.Name == CustomAppRoles.Vendor,
-                cancellationToken
-            );
-
-        if (vendorRole is null)
-        {
-            // Create the Vendor role if it doesn't exist (fallback for seeding issues)
-            vendorRole = Role.Create(CustomAppRoles.Vendor, Guid.Empty);
-            context.Roles.Add(vendorRole);
-            await context.SaveChangesAsync(cancellationToken);
-        }
-
-        // Add role to user if not already assigned
-        if (!user.Roles.Any(r => r.Name == CustomAppRoles.Vendor))
-        {
-            user.Roles.Add(vendorRole);
         }
     }
 }

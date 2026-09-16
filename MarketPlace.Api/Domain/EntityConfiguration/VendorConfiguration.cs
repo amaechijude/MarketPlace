@@ -1,13 +1,10 @@
 using MarketPlace.Api.Domain.Entities;
+using MarketPlace.Api.Domain.Entities.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MarketPlace.Api.Domain.EntityConfiguration;
 
-/// <summary>
-/// EF Core configuration for the Vendor entity.
-/// Defines constraints, indexes, relationships, and default values.
-/// </summary>
 public sealed class VendorConfiguration : IEntityTypeConfiguration<Vendor>
 {
     public void Configure(EntityTypeBuilder<Vendor> builder)
@@ -40,7 +37,8 @@ public sealed class VendorConfiguration : IEntityTypeConfiguration<Vendor>
         builder.Property(v => v.SuspendedAt);
 
         // Enum property
-        builder.Property(v => v.ApprovalStatus)
+        builder
+            .Property(v => v.ApprovalStatus)
             .IsRequired()
             .HasDefaultValue(VendorApprovalStatus.Pending);
 
@@ -48,8 +46,7 @@ public sealed class VendorConfiguration : IEntityTypeConfiguration<Vendor>
         builder.Property(v => v.IsActive).IsRequired().HasDefaultValue(true);
 
         // Decimal properties (rating)
-        builder.Property(v => v.AverageRating)
-            .HasPrecision(3, 2);
+        builder.Property(v => v.AverageRating).HasPrecision(3, 2);
 
         // Foreign Key and Relationships
         builder
@@ -66,9 +63,6 @@ public sealed class VendorConfiguration : IEntityTypeConfiguration<Vendor>
             .OnDelete(DeleteBehavior.Cascade);
 
         // Table configuration
-        builder.ToTable("Vendors", t =>
-        {
-            t.HasComment("Stores vendor information for multi-vendor marketplace");
-        });
+        builder.ToTable("Vendors");
     }
 }

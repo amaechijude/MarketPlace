@@ -36,9 +36,9 @@ public sealed class UserRegistrationTest(CustomWebApplicationFactory factory)
     }
 
     [Fact]
-    public async Task RegisterWithValidEmailAndPassword_ShouldScucced()
+    public async Task RegisterWithValidEmailAndPassword_ShouldSucceed()
     {
-        RegisterUserRequest request = new("user@gmail", "Password@123");
+        RegisterUserRequest request = new("testuser@gmail", "Password@123");
 
         var response = await httpClient.PostAsJsonAsync("auth/register", request);
 
@@ -51,7 +51,7 @@ public sealed class UserRegistrationTest(CustomWebApplicationFactory factory)
         var requests = await Task.WhenAll(
             Enumerable
                 .Range(0, 6)
-                .Select(_ => new EmailLoginRequest("user@gmail", "Password@123"))
+                .Select(_ => new EmailLoginRequest("testuser@gmail", "Password@123"))
                 .Select(s => httpClient.PostAsJsonAsync("auth/login/email", s))
         );
 

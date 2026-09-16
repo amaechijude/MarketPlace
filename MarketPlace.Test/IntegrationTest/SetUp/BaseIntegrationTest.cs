@@ -8,12 +8,14 @@ public abstract class BaseIntegrationTest : IClassFixture<CustomWebApplicationFa
 {
     public readonly HttpClient httpClient;
     public readonly IServiceScope scope;
+    public readonly AppDbContext appDbContext;
 
     public BaseIntegrationTest(CustomWebApplicationFactory factory)
     {
         httpClient = factory.CreateClient();
         scope = factory.Services.CreateScope();
+        appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.Migrate();
+        appDbContext.Database.Migrate();
     }
 }
