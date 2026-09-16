@@ -7,4 +7,8 @@
     <ProjectReference Include="..\MarketPlace.ServiceDefaults\MarketPlace.ServiceDefaults.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Aspire.RabbitMQ.Client" />
+  </ItemGroup>
+
 </Project>

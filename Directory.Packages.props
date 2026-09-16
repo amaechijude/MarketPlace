@@ -5,6 +5,7 @@
   <ItemGroup Label="MarketPlace.Api">
     <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="13.5.4" />
     <PackageVersion Include="Aspire.Hosting.Redis" Version="13.5.4" />
+    <PackageVersion Include="Aspire.RabbitMQ.Client" Version="13.5.4" />
     <PackageVersion Include="AWSSDK.S3" Version="4.0.102.4" />
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
     <PackageVersion Include="DotNetEnv" Version="3.2.0" />
