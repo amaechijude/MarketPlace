@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
 using MarketPlace.Api.Common.ExceptionHandler;
 using MarketPlace.Api.Common.Extensions;
-using MarketPlace.Api.Features.Users.Register;
+using MarketPlace.Api.Features.Auth.Register;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;

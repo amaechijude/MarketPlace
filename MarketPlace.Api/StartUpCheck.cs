@@ -1,43 +1,19 @@
-using System.Net.Sockets;
-using MarketPlace.Api.Infrastucture.Email;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
 namespace MarketPlace.Api;
 
-public sealed class StartupCheck(
-    IConnectionMultiplexer redis,
-    ILogger<StartupCheck> logger,
-    IOptions<SmtpSettings> smtpOptions
-) : IHostedService
+public sealed class StartupCheck(IConnectionMultiplexer redis, ILogger<StartupCheck> logger)
+    : IHostedService
 {
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        IEnumerable<Task> tasks =
-        [
-            PingEmailServerAsync(cancellationToken),
-            PingRedisAsync(cancellationToken),
-        ];
+        IEnumerable<Task> tasks = [PingRedisAsync(cancellationToken)];
 
         await Task.WhenAll(tasks).WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
-
-    private async Task PingEmailServerAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            SmtpSettings smtp = smtpOptions.Value;
-            using var client = new TcpClient();
-            await client.ConnectAsync(smtp.Host, smtp.Port, cancellationToken);
-        }
-        catch (Exception)
-        {
-            logger.LogCritical("Email server is not reachable at startup — aborting.");
-            throw;
-        }
-    }
 
     private async Task PingRedisAsync(CancellationToken cancellationToken)
     {

@@ -6,7 +6,6 @@
   </Folder>
   <Project Path="MarketPlace.Api/MarketPlace.Api.csproj" />
   <Project Path="MarketPlace.AppHost/MarketPlace.AppHost.csproj" />
-  <Project Path="MarketPlace.Notification/MarketPlace.Notification.csproj" Id="634726cd-5cb9-47be-8353-b22ac6319e07" />
   <Project Path="MarketPlace.ServiceDefaults/MarketPlace.ServiceDefaults.csproj" />
   <Project Path="MarketPlace.Test/MarketPlace.Test.csproj" Id="4b61649f-19a4-4fff-9090-4859222501d3" />
 </Solution>

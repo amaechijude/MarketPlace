@@ -1,4 +1,4 @@
-using MarketPlace.Api.Infrastucture.Auth;
+using MarketPlace.Api.Infrastucture.AuthInfrastructure;
 
 namespace MarketPlace.Api.Common.Extensions;
 

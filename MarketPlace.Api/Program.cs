@@ -4,10 +4,10 @@ using FluentValidation;
 using MarketPlace.Api;
 using MarketPlace.Api.Common.ExceptionHandler;
 using MarketPlace.Api.Common.Extensions;
-using MarketPlace.Api.Features.Users.Login;
-using MarketPlace.Api.Features.Users.Register;
+using MarketPlace.Api.Features.Auth.Login;
+using MarketPlace.Api.Features.Auth.Register;
 using MarketPlace.Api.Features.Webhooks;
-using MarketPlace.Api.Infrastucture.Auth;
+using MarketPlace.Api.Infrastucture.AuthInfrastructure;
 using MarketPlace.Api.Infrastucture.Cache;
 using MarketPlace.Api.Infrastucture.Database;
 using MarketPlace.Api.Infrastucture.Email;
@@ -36,7 +36,7 @@ builder.Configuration.AddDotNetEnv(options: LoadOptions.TraversePath());
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+//builder.Services.AddOpenApi();
 
 // options
 builder
@@ -79,8 +79,8 @@ builder
     .Services.AddAuthInfrastructure()
     .AddCacheInfrastructure(builder.Configuration) //cache
     .AddDatabaseInfrastructure(builder.Configuration) // db
-    .AddEmailInfrastructure(builder.Environment) // email
     .AddRateLimitingInfrastructure(builder.Configuration) // ratelimit
+    .AddEmailInfrastructure(builder.Environment)
     .AddMediaStorageInfrastructure(builder.Configuration) // r2
     .AddPaymentHandlersInfrastructure(builder.Configuration)
     .AddOtpInfrastructure();
@@ -104,8 +104,26 @@ app.UseForwardedHeaders();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
-    app.MapScalarApiReference();
+    app.MapOpenApi().WithDocumentPerVersion();
+
+    // MapScalarApiReference sets up the Scalar UI at /scalar
+    // AddDocuments registers all known API versions so Scalar shows a dropdown to switch between them.
+    // You can enrich your OpenAPI document with Scalar specific integrations if you wish.
+    // To learn more: https://scalar.com/products/api-references/integrations/aspnetcore/openapi-extensions
+    app.MapScalarApiReference(options =>
+    {
+        var descriptions = app.DescribeApiVersions();
+
+        for (var i = 0; i < descriptions.Count; i++)
+        {
+            var description = descriptions[i];
+            var isDefault = i == descriptions.Count - 1;
+
+            // isDefault is used to mark the default API version in Scalar.
+            // This decides which version is selected by default when users visit the Scalar UI.
+            options.AddDocument(description.GroupName, description.GroupName, isDefault: isDefault);
+        }
+    });
 }
 
 // Middlewares
@@ -132,7 +150,7 @@ app.UseMiddleware<RefreshTokenMiddleware>();
 
 
 if (app.Environment.IsDevelopment())
-    app.MapGet("/", (HttpResponse response) => response.Redirect("/scalar/v1"))
+    app.MapGet("/", (HttpResponse response) => response.Redirect("/scalar"))
         .ExcludeFromApiReference()
         .ExcludeFromDescription();
 

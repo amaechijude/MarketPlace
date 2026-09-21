@@ -1,9 +1,9 @@
-using System.Net.Mail;
-using System.Threading.Channels;
 using FluentEmail.Core.Interfaces;
 using FluentEmail.Smtp;
 using MarketPlace.Api.Infrastucture.OtpValidation;
 using Microsoft.Extensions.Options;
+using System.Net.Mail;
+using System.Threading.Channels;
 
 namespace MarketPlace.Api.Infrastucture.Email;
 
@@ -11,16 +11,16 @@ public static class EmailDependencyInjection
 {
     public static IServiceCollection AddEmailInfrastructure(
         this IServiceCollection services,
-        IWebHostEnvironment hostEnvironment
+        IHostEnvironment hostEnvironment
     ) => services.AddSmtpConfig().AddEmailRequestChannels().AddEmailSender(hostEnvironment);
 
     private static IServiceCollection AddEmailRequestChannels(this IServiceCollection services) =>
         services.AddSingleton(
             Channel.CreateBounded<OtpEmailRequest>(
-                new BoundedChannelOptions(1000)
+                new BoundedChannelOptions(5000)
                 {
                     FullMode = BoundedChannelFullMode.Wait,
-                    SingleReader = true,
+                    SingleReader = false,
                     SingleWriter = false,
                 }
             )
@@ -28,7 +28,7 @@ public static class EmailDependencyInjection
 
     private static IServiceCollection AddEmailSender(
         this IServiceCollection services,
-        IWebHostEnvironment hostEnvironment
+        IHostEnvironment hostEnvironment
     )
     {
         SmtpSettings smtp = services

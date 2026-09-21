@@ -1,4 +1,5 @@
 ﻿using System.Net.Http.Json;
+using MarketPlace.Api.Features.Auth.Register;
 using MarketPlace.Api.Features.Users.Login;
 using MarketPlace.Api.Features.Users.Register;
 using MarketPlace.Test.IntegrationTest.SetUp;

@@ -1,5 +1,5 @@
 var builder = DistributedApplication.CreateBuilder(args);
-var rabitmq = builder.AddRabbitMQ("quee");
+
 var redis = builder
     .AddRedis("Redis")
     .WithDataVolume("marketplace-redis-data")
@@ -7,6 +7,5 @@ var redis = builder
 
 builder.AddProject<Projects.MarketPlace_Api>("marketplace-api").WaitFor(redis).WithReference(redis);
 
-builder.AddProject<Projects.MarketPlace_Notification>("marketplace-notification");
 
 builder.Build().Run();

@@ -1,8 +1,8 @@
+using MarketPlace.Api.Common.Extensions;
+using Microsoft.Extensions.Caching.Hybrid;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Channels;
-using MarketPlace.Api.Common.Extensions;
-using Microsoft.Extensions.Caching.Hybrid;
 
 namespace MarketPlace.Api.Infrastucture.OtpValidation;
 
@@ -12,6 +12,9 @@ public sealed class VerificationCodeManager(
     Channel<OtpEmailRequest> emailChannel
 ) : ISingletonMarker
 {
+
+    private static readonly TimeSpan maxLifeTime = TimeSpan.FromMinutes(10);
+
     public async ValueTask<Guid> GenerateAndDispatchOtp(
         Guid userId,
         string email,
@@ -19,7 +22,7 @@ public sealed class VerificationCodeManager(
         CancellationToken cancellationToken
     )
     {
-        TimeSpan maxLifeTime = TimeSpan.FromMinutes(10);
+
 
         string rawCode = RandomNumberGenerator.GetInt32(1_000_000).ToString("D6");
 
@@ -84,17 +87,4 @@ public sealed class VerificationCodeManager(
         SHA256.HashData(Encoding.UTF8.GetBytes(input), hash);
         return Convert.ToHexString(hash);
     }
-
-    private static bool IsValidHa(
-        string input,
-        OtpVerificationCode otp,
-        OtpType type,
-        DateTimeOffset utc
-    ) =>
-        otp.Type == type
-        && utc > otp.ExpiresOn
-        && CryptographicOperations.FixedTimeEquals(
-            Encoding.UTF8.GetBytes(HashOtp(input)),
-            Encoding.UTF8.GetBytes(otp.HashValue)
-        );
 }

@@ -1,10 +1,8 @@
 using FluentEmail.Core;
-using MarketPlace.Api.Common.Extensions;
 
 namespace MarketPlace.Api.Infrastucture.Email;
 
 public sealed class EmailSender(ILogger<EmailSender> logger, IFluentEmail fluentEmail)
-    : IScopedRequestHandler
 {
     public async Task<bool> SendEmailAsync(EmailMetaData emailMetaData, CancellationToken ct)
     {
