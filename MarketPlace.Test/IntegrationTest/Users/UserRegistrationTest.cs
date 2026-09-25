@@ -1,7 +1,6 @@
 ﻿using System.Net.Http.Json;
+using MarketPlace.Api.Features.Auth.Login;
 using MarketPlace.Api.Features.Auth.Register;
-using MarketPlace.Api.Features.Users.Login;
-using MarketPlace.Api.Features.Users.Register;
 using MarketPlace.Test.IntegrationTest.SetUp;
 
 namespace MarketPlace.Test.IntegrationTest.Users;
@@ -9,12 +8,15 @@ namespace MarketPlace.Test.IntegrationTest.Users;
 public sealed class UserRegistrationTests(CustomWebApplicationFactory factory)
     : BaseIntegrationTest(factory)
 {
+    private const string registerUrl = $"{apiBaseUrlv1}/auth/register";
+    private const string emailLoginUrl = $"{apiBaseUrlv1}/auth/login/email";
+
     [Fact]
     public async Task Register_WithInvalidEmail_ReturnsBadRequest()
     {
         RegisterUserRequest request = new("gmail", "Password@123");
 
-        var response = await httpClient.PostAsJsonAsync("auth/register", request);
+        var response = await httpClient.PostAsJsonAsync(registerUrl, request);
 
         Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -24,7 +26,7 @@ public sealed class UserRegistrationTests(CustomWebApplicationFactory factory)
     {
         RegisterUserRequest request = new($"user-{Guid.NewGuid():N}@example.com", "@123");
 
-        var response = await httpClient.PostAsJsonAsync("auth/register", request);
+        var response = await httpClient.PostAsJsonAsync(registerUrl, request);
 
         Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -34,7 +36,7 @@ public sealed class UserRegistrationTests(CustomWebApplicationFactory factory)
     {
         RegisterUserRequest request = new("use r@gmail", "Password@123");
 
-        var response = await httpClient.PostAsJsonAsync("auth/register", request);
+        var response = await httpClient.PostAsJsonAsync(registerUrl, request);
 
         Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
     }
@@ -47,7 +49,7 @@ public sealed class UserRegistrationTests(CustomWebApplicationFactory factory)
             "Password@123"
         );
 
-        var response = await httpClient.PostAsJsonAsync("auth/register", request);
+        var response = await httpClient.PostAsJsonAsync(registerUrl, request);
         var registration = await response.Content.ReadFromJsonAsync<RegisterUserResponse>();
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
@@ -62,8 +64,8 @@ public sealed class UserRegistrationTests(CustomWebApplicationFactory factory)
         string email = $"existing-{Guid.NewGuid():N}@example.com";
         RegisterUserRequest request = new(email, "Password@123");
 
-        var firstResponse = await httpClient.PostAsJsonAsync("auth/register", request);
-        var secondResponse = await httpClient.PostAsJsonAsync("auth/register", request);
+        var firstResponse = await httpClient.PostAsJsonAsync(registerUrl, request);
+        var secondResponse = await httpClient.PostAsJsonAsync(registerUrl, request);
         var registration = await secondResponse.Content.ReadFromJsonAsync<RegisterUserResponse>();
 
         Assert.Equal(System.Net.HttpStatusCode.OK, firstResponse.StatusCode);
@@ -78,12 +80,12 @@ public sealed class UserRegistrationTests(CustomWebApplicationFactory factory)
     {
         RegisterUserRequest request = new($"verify-{Guid.NewGuid():N}@example.com", "Password@123");
 
-        var registerResponse = await httpClient.PostAsJsonAsync("auth/register", request);
+        var registerResponse = await httpClient.PostAsJsonAsync(registerUrl, request);
         var registration = await registerResponse.Content.ReadFromJsonAsync<RegisterUserResponse>();
         Assert.NotNull(registration);
 
         var verifyResponse = await httpClient.PostAsJsonAsync(
-            "auth/register/verify",
+            registerUrl,
             new RegisterUserVerifyOtpRequest(registration.OtpId, "000000")
         );
 
@@ -98,7 +100,7 @@ public sealed class UserRegistrationTests(CustomWebApplicationFactory factory)
             Enumerable
                 .Range(0, 6)
                 .Select(_ => new EmailLoginRequest(email, "Password@123"))
-                .Select(s => httpClient.PostAsJsonAsync("auth/login/email", s))
+                .Select(s => httpClient.PostAsJsonAsync(emailLoginUrl, s))
         );
 
         Assert.Contains(
@@ -117,7 +119,7 @@ public sealed class UserRegistrationTests(CustomWebApplicationFactory factory)
                     $"ip-rate-limit-{Guid.NewGuid():N}@example.com",
                     "Password@123"
                 ))
-                .Select(request => httpClient.PostAsJsonAsync("auth/login/email", request))
+                .Select(request => httpClient.PostAsJsonAsync(emailLoginUrl, request))
         );
 
         var rejectedResponse = Assert.Single(

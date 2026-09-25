@@ -1,5 +1,3 @@
-using MarketPlace.Api.Domain.DatabaseContext.SeedData;
-
 namespace MarketPlace.Api.Domain.DatabaseContext.SeedData;
 
 /// <summary>
@@ -16,6 +14,7 @@ public static class VendorRoleSeeder
     public static class VendorRoleConstants
     {
         public const string VendorRole = CustomAppRoles.Vendor;
-        public const string VendorDescription = "Vendor with permission to manage products and store";
+        public const string VendorDescription =
+            "Vendor with permission to manage products and store";
     }
 }

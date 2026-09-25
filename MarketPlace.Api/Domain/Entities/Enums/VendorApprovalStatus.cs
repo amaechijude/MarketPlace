@@ -1,10 +1,11 @@
+using System.Text.Json.Serialization;
+
 namespace MarketPlace.Api.Domain.Entities.Enums;
 
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum VendorApprovalStatus
 {
-    Pending = 0,
-
-    Approved = 1,
-
-    Suspended = 2,
+    Pending,
+    Approved,
+    Suspended,
 }

@@ -1,19 +1,10 @@
 using FluentValidation;
 using MarketPlace.Api.Features.Vendors.DTOs;
 
-namespace MarketPlace.Api.Features.Vendors.Validators;
+namespace MarketPlace.Api.Features.Vendors.CreateVendor;
 
-/// <summary>
-/// Validation rules for vendor onboarding requests.
-/// Ensures all submitted data meets business requirements.
-/// </summary>
 public sealed class VendorOnboardingRequestValidator : AbstractValidator<VendorOnboardingRequest>
 {
-    private static readonly HashSet<char> AllowedSlugCharacters = new()
-    {
-        '-', '_'
-    };
-
     public VendorOnboardingRequestValidator()
     {
         // Business Name validation
@@ -23,7 +14,7 @@ public sealed class VendorOnboardingRequestValidator : AbstractValidator<VendorO
             .Length(3, 256)
             .WithMessage("Business name must be between 3 and 256 characters.")
             .Matches(@"^[a-zA-Z0-9\s&',.()-]+$")
-            .WithMessage("Business name contains invalid characters.");
+            .WithMessage("Business name should not contains invalid characters.");
 
         // Store Slug validation
         RuleFor(x => x.StoreSlug)

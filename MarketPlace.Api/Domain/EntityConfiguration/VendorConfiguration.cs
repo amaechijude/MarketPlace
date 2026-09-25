@@ -33,17 +33,13 @@ public sealed class VendorConfiguration : IEntityTypeConfiguration<Vendor>
 
         // DateTime properties
         builder.Property(v => v.CreatedAt).IsRequired();
-        builder.Property(v => v.UpdatedAt).IsRequired();
-        builder.Property(v => v.SuspendedAt);
 
         // Enum property
         builder
             .Property(v => v.ApprovalStatus)
             .IsRequired()
+            .HasConversion<string>()
             .HasDefaultValue(VendorApprovalStatus.Pending);
-
-        // Boolean properties
-        builder.Property(v => v.IsActive).IsRequired().HasDefaultValue(true);
 
         // Decimal properties (rating)
         builder.Property(v => v.AverageRating).HasPrecision(3, 2);
@@ -53,7 +49,7 @@ public sealed class VendorConfiguration : IEntityTypeConfiguration<Vendor>
             .HasOne(v => v.User)
             .WithOne(u => u.Vendor)
             .HasForeignKey<Vendor>(v => v.UserId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .OnDelete(DeleteBehavior.Restrict);
 
         // One vendor has many products
         builder

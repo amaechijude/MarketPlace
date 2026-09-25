@@ -3,7 +3,6 @@ using MarketPlace.Api.Common.ApiResponseFactory;
 using MarketPlace.Api.Common.Extensions;
 using MarketPlace.Api.Features.Vendors.DTOs;
 using MarketPlace.Api.Features.Vendors.Handlers;
-using MarketPlace.Api.Features.Vendors.Validators;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MarketPlace.Api.Features.Vendors;
@@ -57,7 +56,6 @@ public sealed class VendorEndpoints : IRequestEndpoints
                         await handler.HandleAsync(user.UserId, request, cancellationToken)
                     ).ToMinimalApiResult()
             )
-            .WithValidation<VendorOnboardingRequest>()
-            .ProducesResponseWithProblem<VendorOnboardingResponse>(409);
+            .WithValidation<VendorOnboardingRequest>();
     }
 }

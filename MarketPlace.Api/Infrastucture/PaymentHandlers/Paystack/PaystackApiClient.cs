@@ -1,6 +1,3 @@
-using Polly.CircuitBreaker;
-using Polly.Timeout;
-
 namespace MarketPlace.Api.Infrastucture.PaymentHandlers.Paystack;
 
 public sealed class PaystackApiClient(HttpClient client)

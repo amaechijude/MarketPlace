@@ -1,5 +1,6 @@
 using MarketPlace.Api.Common.ApiResponseFactory;
 using MarketPlace.Api.Common.Extensions;
+using MarketPlace.Api.Common.Normalizer;
 using MarketPlace.Api.Domain.DatabaseContext;
 using MarketPlace.Api.Domain.DatabaseContext.SeedData;
 using MarketPlace.Api.Domain.Entities;
@@ -14,35 +15,33 @@ public sealed class VendorOnboardingHandler(
     ILogger<VendorOnboardingHandler> logger
 ) : IScopedRequestHandler
 {
-    public async Task<ApiResponse<VendorOnboardingResponse>> HandleAsync(
+    public async Task<ApiResponse<int>> HandleAsync(
         Guid userId,
         VendorOnboardingRequest request,
         CancellationToken cancellationToken
     )
     {
-        var user = await context.Users.FindAsync(userId, cancellationToken);
+        var user = await context.Users.FindAsync([userId], cancellationToken: cancellationToken);
         if (user is null)
-            return ApiResponse<VendorOnboardingResponse>.NotFound(
-                "User not found. Please ensure you are logged in."
-            );
+            return ApiResponse<int>.NotFound("User not found. Please ensure you are logged in.");
         // Check if user already has a vendor account
         var existingVendor = await context
             .Vendors.AsNoTracking()
             .FirstOrDefaultAsync(v => v.UserId == userId, cancellationToken);
 
         if (existingVendor is not null)
-            return ApiResponse<VendorOnboardingResponse>.Conflict(
-                "User already has an active vendor account."
-            );
+            return ApiResponse<int>.Conflict("User already has an active vendor account.");
+
+        var slug = Slugger.Slugify(request.BusinessName);
 
         // Check if store slug is already taken
         var slugTaken = await context
             .Vendors.AsNoTracking()
-            .AnyAsync(v => v.StoreSlug == request.StoreSlug.ToLowerInvariant(), cancellationToken);
+            .AnyAsync(v => v.StoreSlug == slug, cancellationToken);
 
         if (slugTaken)
-            return ApiResponse<VendorOnboardingResponse>.Conflict(
-                $"Store slug '{request.StoreSlug}' is already in use. Please choose a different one."
+            return ApiResponse<int>.Conflict(
+                $"Store slug '{slug}' is already in use. Please choose a different one."
             );
 
         try
@@ -50,41 +49,7 @@ public sealed class VendorOnboardingHandler(
             var now = timeProvider.GetUtcNow();
 
             // Create vendor entity
-            var vendor = Vendor.Create(
-                userId,
-                request.BusinessName,
-                request.StoreSlug,
-                request.SupportEmail,
-                now
-            );
-
-            // Add optional fields
-            if (!string.IsNullOrWhiteSpace(request.Description))
-                vendor.UpdateProfile(
-                    request.Description,
-                    request.SupportPhone,
-                    null,
-                    request.BusinessAddress,
-                    request.Country,
-                    null,
-                    now
-                );
-            else if (
-                !string.IsNullOrWhiteSpace(request.SupportPhone)
-                || !string.IsNullOrWhiteSpace(request.BusinessAddress)
-                || !string.IsNullOrWhiteSpace(request.Country)
-            )
-            {
-                vendor.UpdateProfile(
-                    null,
-                    request.SupportPhone,
-                    null,
-                    request.BusinessAddress,
-                    request.Country,
-                    null,
-                    now
-                );
-            }
+            var vendor = Vendor.Create(userId, request.BusinessName, request.SupportEmail, now);
 
             if (!string.IsNullOrWhiteSpace(request.BusinessRegistrationNumber))
                 vendor.UpdateBusinessRegistrationNumber(
@@ -117,17 +82,7 @@ public sealed class VendorOnboardingHandler(
             // Save all changes atomically
             await context.SaveChangesAsync(cancellationToken);
 
-            return ApiResponse<VendorOnboardingResponse>.Success(
-                new VendorOnboardingResponse(
-                    vendor.Id,
-                    vendor.UserId,
-                    vendor.BusinessName,
-                    vendor.StoreSlug,
-                    vendor.ApprovalStatus,
-                    vendor.CreatedAt,
-                    "Vendor registration successful. Your account is pending approval. You will receive an email notification once approved."
-                )
-            );
+            return ApiResponse<int>.Created();
         }
         catch (DbUpdateException ex)
         {
@@ -136,7 +91,7 @@ public sealed class VendorOnboardingHandler(
                 "Database update error during vendor onboarding for user {UserId}",
                 userId
             );
-            return ApiResponse<VendorOnboardingResponse>.BadRequest(
+            return ApiResponse<int>.BadRequest(
                 "An error occurred while registering your vendor account. Please try again later."
             );
         }

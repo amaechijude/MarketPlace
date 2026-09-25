@@ -10,7 +10,7 @@ public sealed class AuthEndpoints : IRequestEndpoints
 {
     public void Map(IEndpointRouteBuilder builder)
     {
-        var group = builder.MapGroup("auth").WithTags("Auth").HasApiVersion(1);
+        var group = builder.MapGroup("auth").WithTags("Auth");
 
         RegisterEndpoint.Map(group);
         LoginEnpoint.Map(group);

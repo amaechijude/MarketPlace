@@ -6,6 +6,7 @@
     <PackageVersion Include="Asp.Versioning.Http" Version="10.2.3" />
     <PackageVersion Include="Asp.Versioning.Mvc.ApiExplorer" Version="10.2.1" />
     <PackageVersion Include="Asp.Versioning.OpenApi" Version="10.2.3" />
+    <PackageVersion Include="Aspire.Hosting.Docker" Version="13.5.4" />
     <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="13.5.4" />
     <PackageVersion Include="Aspire.Hosting.Redis" Version="13.5.4" />
     <PackageVersion Include="Aspire.RabbitMQ.Client" Version="13.5.4" />
@@ -29,6 +30,7 @@
     <PackageVersion Include="Microsoft.Extensions.Caching.Hybrid" Version="10.10.0" />
     <PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.12" />
+    <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.24.2-preview.1" />
     <PackageVersion Include="RabbitMQ.Client" Version="7.2.2" />
     <PackageVersion Include="RedisRateLimiting.AspNetCore" Version="1.2.1" />
     <PackageVersion Include="StackExchange.Redis" Version="3.3.0" />

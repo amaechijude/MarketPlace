@@ -1,10 +1,14 @@
-using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using StackExchange.Redis;
 
 namespace MarketPlace.Api.Infrastucture.RateLimiting.Redis;
 
+/// <summary>
+/// Distributed, Redis-backed token bucket rate limiter. Intended to be registered as a
+/// singleton per (capacity, refillRate, refillIntervalSeconds) configuration — it holds a
+/// SemaphoreSlim and cached script hash that are only useful if reused across calls.
+/// </summary>
 public sealed class TokenBucketLimiter(
     IConnectionMultiplexer connectionMultiplexer,
     int capacity,
@@ -13,19 +17,25 @@ public sealed class TokenBucketLimiter(
 ) : ITokenBucketLimiter
 {
     private readonly IDatabase _db = connectionMultiplexer.GetDatabase();
+
     private readonly SemaphoreSlim _scriptLoadLock = new(1, 1);
 
     // Calculated once as a fallback identity; replaced once EnsureScriptLoadedAsync
-    // successfully loads the script onto the server(s).
+    // successfully loads the script onto every targeted server.
     private byte[] _scriptHash = SHA1.HashData(Encoding.UTF8.GetBytes(TokenBucketScript));
-    private volatile bool _scriptLoaded = false;
+    private volatile bool _scriptLoaded;
 
-    public async Task<RateLimitResult> AllowAsync(IPAddress? iPAddress) =>
-        await AllowAsync(iPAddress?.ToString() ?? "anonymous");
+    // Guards against hammering Redis with ScriptLoad retries when loading is persistently
+    // failing (e.g. a transient auth/network issue). Cleared as soon as a load succeeds.
+    private DateTimeOffset _nextLoadAttempt = DateTimeOffset.MinValue;
+    private static readonly TimeSpan LoadRetryCooldown = TimeSpan.FromSeconds(5);
 
-    public async Task<RateLimitResult> AllowAsync(string key)
+    public async Task<RateLimitResult> AllowAsync(string key, CancellationToken cancellationToken)
     {
-        await EnsureScriptLoadedAsync().ConfigureAwait(false);
+        ArgumentException.ThrowIfNullOrEmpty(key);
+        cancellationToken.ThrowIfCancellationRequested();
+
+        await EnsureScriptLoadedAsync(cancellationToken).ConfigureAwait(false);
 
         var keys = new RedisKey[] { key };
         var args = new RedisValue[] { capacity, refillRate, refillIntervalSeconds };
@@ -57,25 +67,31 @@ public sealed class TokenBucketLimiter(
     /// <summary>
     /// Ensures the Lua script is loaded on the server(s) for EVALSHA usage. Thread-safe: concurrent
     /// callers on first use (or after a NOSCRIPT reset) will wait for a single load attempt rather
-    /// than racing each other.
+    /// than racing each other. Backs off for a short cooldown after a failed attempt so a persistent
+    /// load failure doesn't retry on every single request.
     /// </summary>
-    private async Task EnsureScriptLoadedAsync()
+    private async Task EnsureScriptLoadedAsync(CancellationToken cancellationToken)
     {
-        if (_scriptLoaded)
+        if (_scriptLoaded || DateTimeOffset.UtcNow < _nextLoadAttempt)
             return;
 
-        await _scriptLoadLock.WaitAsync().ConfigureAwait(false);
+        await _scriptLoadLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            if (_scriptLoaded)
+            if (_scriptLoaded || DateTimeOffset.UtcNow < _nextLoadAttempt)
                 return;
 
             var servers = _db.Multiplexer.GetServers();
             if (servers.Length == 0)
-                return; // No servers known yet; fall back to EVAL for this call.
+            {
+                // No servers known yet; fall back to EVAL for this call, retry soon.
+                _nextLoadAttempt = DateTimeOffset.UtcNow.Add(LoadRetryCooldown);
+                return;
+            }
 
             byte[]? loadedHash = null;
-            var allSucceeded = servers.Length > 0;
+            var anyTargeted = false;
+            var allSucceeded = true;
 
             foreach (var server in servers)
             {
@@ -84,6 +100,7 @@ public sealed class TokenBucketLimiter(
                 if (server.IsReplica)
                     continue;
 
+                anyTargeted = true;
                 try
                 {
                     loadedHash = await server
@@ -96,13 +113,17 @@ public sealed class TokenBucketLimiter(
                 }
             }
 
+            var success = anyTargeted && allSucceeded && loadedHash is not null;
+
             if (loadedHash is not null)
-            {
                 _scriptHash = loadedHash;
-                _scriptLoaded = allSucceeded;
-            }
-            // If nothing succeeded, _scriptLoaded stays false and every call will retry
-            // the load, falling back to EVAL in the meantime via the NOSCRIPT catch path.
+
+            _scriptLoaded = success;
+            _nextLoadAttempt = success
+                ? DateTimeOffset.MinValue
+                : DateTimeOffset.UtcNow.Add(LoadRetryCooldown);
+            // If loading didn't fully succeed, _scriptLoaded stays false and calls fall back to
+            // EVAL in the meantime via the NOSCRIPT catch path, while retries are rate-limited.
         }
         finally
         {

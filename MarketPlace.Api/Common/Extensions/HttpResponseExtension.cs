@@ -8,7 +8,7 @@ public static class HttpResponseExtension
         this HttpResponse response,
         string accessToken,
         DateTimeOffset expiresOn,
-        IWebHostEnvironment environment
+        IHostEnvironment environment
     )
     {
         response.Cookies.Append(

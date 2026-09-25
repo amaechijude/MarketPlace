@@ -17,22 +17,12 @@ public static class LoginEnpoint
                 "email",
                 async (
                     [FromBody] EmailLoginRequest request,
-                    [FromKeyedServices(EmailAddresTokenBucketOptions.Key)]
-                        ITokenBucketLimiter emailRateLimiter,
                     [FromServices] EmailLoginHandler handler,
                     IWebHostEnvironment env,
                     HttpResponse httpResponse,
                     CancellationToken cancellation
                 ) =>
                 {
-                    var result = await emailRateLimiter.AllowAsync(
-                        EmailNormalizer.Normalize(request.Email)
-                    );
-                    if (!result.Allowed)
-                    {
-                        httpResponse.AttachRetryAfterHeader(result.RetryAfter);
-                        return Results.Problem(statusCode: StatusCodes.Status429TooManyRequests);
-                    }
                     var response = await handler.HandleAsync(request, cancellation);
                     if (!response.IsSuccess)
                         return Results.Problem(response.Problem);
@@ -44,8 +34,7 @@ public static class LoginEnpoint
                     return Results.NoContent();
                 }
             )
-            .WithValidation<EmailLoginRequest>()
-            .WithIpAddressRateLimiter("login")
+            .WithValidationIpAddressAndEmailAddressRateLimit<EmailLoginRequest>("login")
             .Produces(204)
             .Produces<EmailLoginResponse>(202);
 

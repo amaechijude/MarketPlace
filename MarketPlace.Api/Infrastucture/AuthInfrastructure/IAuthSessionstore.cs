@@ -8,6 +8,7 @@ public interface IAuthSessionStore
         CancellationToken ct
     );
     Task DeleteAsync(string token, CancellationToken cancellationToken);
+    Task DeleteAllUserSessionsAsync(Guid userId, CancellationToken cancellationToken);
     Task<AuthSessionRecord?> GetSessionAsync(string token, CancellationToken cancellationToken);
 
     Task<(string accessToken, DateTimeOffset expiresOn)> RefreshSessionAsync(

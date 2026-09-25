@@ -8,49 +8,49 @@ public sealed class RefreshTokenMiddleware(
     TimeProvider timeProvider,
     IAuthSessionStore authSessionStore,
     ILogger<RefreshTokenMiddleware> logger,
-    IWebHostEnvironment env
+    IHostEnvironment env
 )
 {
     [UsedImplicitly]
     public async Task InvokeAsync(HttpContext context)
     {
-        var token = context.Request.ExtractToken();
-
-        if (!string.IsNullOrWhiteSpace(token))
+        context.Response.OnStarting(async () =>
         {
-            context.Response.OnStarting(async () =>
+            try
+            { // Only refresh if the request was successful
+                if (context.Response.StatusCode is < 200 or >= 300)
+                    return;
+
+                // extract token
+                var token = context.Request.ExtractToken();
+                if (string.IsNullOrWhiteSpace(token))
+                    return;
+
+                var now = timeProvider.GetUtcNow();
+                var session = await authSessionStore.GetSessionAsync(token, context.RequestAborted);
+
+                if (
+                    session is null
+                    || session.ExpiresOn <= now
+                    || (session.ExpiresOn - now).TotalDays >= 2
+                )
+                    return;
+
+                var (accessToken, expiresOn) = await authSessionStore.RefreshSessionAsync(
+                    token,
+                    session,
+                    context.RequestAborted
+                );
+
+                context.Response.AttachAccessToken(accessToken, expiresOn, env);
+            }
+            catch (Exception ex)
             {
-                try
-                { // Only refresh if the request was successful
-                    if (context.Response.StatusCode is < 200 or >= 300)
-                        return;
-                    var now = timeProvider.GetUtcNow();
-                    var session = await authSessionStore.GetSessionAsync(
-                        token,
-                        context.RequestAborted
-                    );
-
-                    if (session is null || session.ExpiresOn <= now)
-                        return;
-
-                    if ((session.ExpiresOn - now).TotalDays >= 2)
-                        return;
-
-                    var (accessToken, expiresOn) = await authSessionStore.RefreshSessionAsync(
-                        token,
-                        session,
-                        context.RequestAborted
-                    );
-
-                    context.Response.AttachAccessToken(accessToken, expiresOn, env);
-                }
-                catch (Exception ex)
-                {
-                    if (logger.IsEnabled(LogLevel.Warning))
-                        logger.LogWarning(ex, "Session refresh failed");
-                }
-            });
-        }
+                if (logger.IsEnabled(LogLevel.Warning))
+                    logger.LogWarning(ex, "Session refresh failed");
+            }
+        });
+        // }
 
         await next(context);
     }

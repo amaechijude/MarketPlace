@@ -6,6 +6,7 @@ namespace MarketPlace.Test.IntegrationTest.SetUp;
 
 public abstract class BaseIntegrationTest : IClassFixture<CustomWebApplicationFactory>
 {
+    public const string apiBaseUrlv1 = "api/v1";
     public readonly HttpClient httpClient;
     public readonly IServiceScope scope;
     public readonly AppDbContext appDbContext;
