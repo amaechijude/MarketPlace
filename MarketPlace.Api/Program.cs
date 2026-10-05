@@ -37,7 +37,7 @@ builder.Configuration.AddDotNetEnv(options: LoadOptions.TraversePath());
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-//builder.Services.AddOpenApi();
+builder.Services.AddSingleton(_ => TimeProvider.System);
 
 // options
 builder
@@ -47,11 +47,11 @@ builder
     .ValidateOnStart();
 
 // Validation, exceptions and problemdetails
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
 builder
     .Services.AddValidation()
-    .AddSingleton(_ => TimeProvider.System)
     .AddValidatorsFromAssemblyContaining<RegisterUserRequestValidator>(includeInternalTypes: true)
-    .AddExceptionHandler<GlobalExceptionHandler>()
     .AddProblemDetails(options =>
         options.CustomizeProblemDetails = ctx =>
         {
@@ -84,15 +84,14 @@ builder
     .AddMediaStorageInfrastructure(builder.Configuration) // r2
     .AddPaymentHandlersInfrastructure(builder.Configuration)
     .AddOtpInfrastructure()
-    .AddEmailInfrastructure(builder.Environment);
+    .AddEmailInfrastructure(builder.Configuration, builder.Environment);
 
 //hosted service
 
 // forwadedheaders
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
-{
-    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-});
+    options.ForwardedHeaders = ForwardedHeaders.All
+);
 
 builder.Services.AddHostedService<StartupCheck>();
 
@@ -128,8 +127,6 @@ app.UseMiddleware<RefreshTokenMiddleware>();
 
 // Antiforgery
 
-
-
 if (app.Environment.IsDevelopment())
     app.MapGet("/", (HttpResponse response) => response.Redirect("/scalar"))
         .ExcludeFromApiReference()
@@ -137,20 +134,4 @@ if (app.Environment.IsDevelopment())
 
 // Map endpoints
 app.MapRequestEndpoints();
-
-app.MapPost("redis", ([FromBody] Create create) => Results.Ok(create))
-    .WithValidationAndIpRateLimit<Create>("redis");
-
 app.Run();
-
-public record Create(string Name, int Age);
-
-public sealed class CreateValidator : AbstractValidator<Create>
-{
-    public CreateValidator()
-    {
-        RuleFor(x => x.Name).NotEmpty().MinimumLength(2);
-
-        RuleFor(x => x.Age).GreaterThan(4);
-    }
-}

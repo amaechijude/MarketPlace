@@ -18,11 +18,10 @@ public static class MediaStorageServiceCollection
 
         private IServiceCollection AddCloudflareR2Settings(IConfiguration configuration)
         {
-            DotNetEnv.Env.TraversePath().Load();
 
             services
                 .AddOptions<R2Options>()
-                .Bind(configuration.GetRequiredSection(nameof(R2Options)))
+                .Bind(configuration.GetSection("R2Options"))
                 .ValidateDataAnnotations()
                 .ValidateOnStart();
 
