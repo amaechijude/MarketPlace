@@ -16,6 +16,6 @@ public static class ListProductEndpoint
                     CancellationToken ct
                 ) => (await handler.HandleAsync(request, ct)).ToMinimalApiResult()
             )
-            .Produces<CursorPagedResponse<ListProductResponse>>();
+            .Produces<CursorPagedResponse<ListProductResponse, Guid?>>();
     }
 }

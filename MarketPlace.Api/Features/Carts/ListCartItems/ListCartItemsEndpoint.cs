@@ -26,6 +26,6 @@ public static class ListCartItemsEndpoint
                 }
             )
             .RequireAuthorization()
-            .Produces<CursorPagedResponse<CartItemResponse>>();
+            .Produces<CursorPagedResponse<CartItemResponse, Guid?>>();
     }
 }

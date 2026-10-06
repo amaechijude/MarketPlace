@@ -9,7 +9,7 @@ namespace MarketPlace.Api.Features.Carts.ListCartItems;
 
 public sealed class ListCartItemHandler(AppDbContext context) : IScopedRequestHandler
 {
-    public async Task<ApiResponse<CursorPagedResponse<CartItemResponse>>> HandleAsync(
+    public async Task<ApiResponse<CursorPagedResponse<CartItemResponse, Guid?>>> HandleAsync(
         Guid userId,
         ListCartItemRequest request,
         CancellationToken cancellationToken
@@ -34,13 +34,13 @@ public sealed class ListCartItemHandler(AppDbContext context) : IScopedRequestHa
 
         Guid? nextCursor = hasNextPage ? cartItems[^1].Id : null;
 
-        var response = new CursorPagedResponse<CartItemResponse>(
+        var response = new CursorPagedResponse<CartItemResponse, Guid?>(
             Items: cartItems,
             NextCursor: nextCursor,
             HasNextPage: hasNextPage
         );
 
-        return ApiResponse<CursorPagedResponse<CartItemResponse>>.Success(response);
+        return ApiResponse<CursorPagedResponse<CartItemResponse, Guid?>>.Success(response);
     }
 
     private static readonly Expression<Func<CartItem, CartItemResponse>> ProjectCartItemToResponse =

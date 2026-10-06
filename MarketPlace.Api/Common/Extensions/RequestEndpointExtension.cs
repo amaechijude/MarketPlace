@@ -21,17 +21,17 @@ public static class RequestEndpointExtension
     {
         // Api versioning
         _ = services
-            .AddApiVersioning(options =>
-            {
-                options.ApiVersionReader = new UrlSegmentApiVersionReader(); // API versioning by URL segment (api/v1/users)
-                options.ReportApiVersions = true;
-                options.AssumeDefaultVersionWhenUnspecified = true;
-            })
-            .AddApiExplorer(options =>
-            {
-                options.GroupNameFormat = "'v'VVV";
-            })
-            .AddOpenApi();
+        // .AddApiVersioning(options =>
+        // {
+        //     options.ApiVersionReader = new UrlSegmentApiVersionReader(); // API versioning by URL segment (api/v1/users)
+        //     options.ReportApiVersions = true;
+        //     options.AssumeDefaultVersionWhenUnspecified = true;
+        // })
+        // .AddApiExplorer(options =>
+        // {
+        //     options.GroupNameFormat = "'v'VVV";
+        // })
+        .AddOpenApi();
 
         var endpoints = assembly
             .DefinedTypes.Where(t =>
@@ -52,14 +52,14 @@ public static class RequestEndpointExtension
 
     public static void MapRequestEndpoints(this WebApplication app)
     {
-        var versionSet = app.NewApiVersionSet()
-            .HasApiVersion(new ApiVersion(1))
-            .HasApiVersion(new ApiVersion(2))
-            .ReportApiVersions()
-            .Build();
+        // var versionSet = app.NewApiVersionSet()
+        //     .HasApiVersion(new ApiVersion(1))
+        //     .HasApiVersion(new ApiVersion(2))
+        //     .ReportApiVersions()
+        //     .Build();
 
-        RouteGroupBuilder versionGroup = app.MapGroup("/api/v{version:apiVersion}")
-            .WithApiVersionSet(versionSet);
+        RouteGroupBuilder versionGroup = app.MapGroup("/api/v1");
+        // .WithApiVersionSet(versionSet);
 
         var endpoints = app.Services.GetRequiredService<IEnumerable<IRequestEndpoints>>().Reverse();
         foreach (var endpoint in endpoints)
@@ -68,24 +68,27 @@ public static class RequestEndpointExtension
 
     public static void MapOpenApiDocumentation(this WebApplication app)
     {
-        app.MapOpenApi().WithDocumentPerVersion();
+        app.MapOpenApi();
+        // .WithDocumentPerVersion();
 
-        app.MapScalarApiReference(options =>
-        {
-            var descriptions = app.DescribeApiVersions();
+        app.MapScalarApiReference();
 
-            for (var i = 0; i < descriptions.Count; i++)
-            {
-                var description = descriptions[i];
+        // app.MapScalarApiReference(options =>
+        // {
+        //     var descriptions = app.DescribeApiVersions();
 
-                // isDefault is used to mark the default API version in Scalar.
-                // This decides which version is selected by default when users visit the Scalar UI.
-                options.AddDocument(
-                    description.GroupName,
-                    description.GroupName,
-                    isDefault: i == 0
-                );
-            }
-        });
+        //     for (var i = 0; i < descriptions.Count; i++)
+        //     {
+        //         var description = descriptions[i];
+
+        //         // isDefault is used to mark the default API version in Scalar.
+        //         // This decides which version is selected by default when users visit the Scalar UI.
+        //         options.AddDocument(
+        //             description.GroupName,
+        //             description.GroupName,
+        //             isDefault: i == 0
+        //         );
+        //     }
+        // });
     }
 }

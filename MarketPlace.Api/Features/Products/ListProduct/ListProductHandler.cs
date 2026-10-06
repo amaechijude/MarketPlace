@@ -8,7 +8,7 @@ namespace MarketPlace.Api.Features.Products.ListProduct;
 
 public sealed class ListProductHandler(AppDbContext context) : IScopedRequestHandler
 {
-    public async Task<ApiResponse<CursorPagedResponse<ListProductResponse>>> HandleAsync(
+    public async Task<ApiResponse<CursorPagedResponse<ListProductResponse, Guid?>>> HandleAsync(
         ListProductRequest request,
         CancellationToken cancellationToken
     )
@@ -46,11 +46,11 @@ public sealed class ListProductHandler(AppDbContext context) : IScopedRequestHan
 
         Guid? nextCursor = hasNextPage ? products[^1].Id : null;
 
-        var response = new CursorPagedResponse<ListProductResponse>(
+        var response = new CursorPagedResponse<ListProductResponse, Guid?>(
             Items: products,
             NextCursor: nextCursor,
             HasNextPage: hasNextPage
         );
-        return ApiResponse<CursorPagedResponse<ListProductResponse>>.Success(response);
+        return ApiResponse<CursorPagedResponse<ListProductResponse, Guid?>>.Success(response);
     }
 }
