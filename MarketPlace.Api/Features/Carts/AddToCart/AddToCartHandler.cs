@@ -22,7 +22,7 @@ public sealed class AddToCartHandler(AppDbContext context) : IScopedRequestHandl
         if (variant is null)
             return ApiResponse<int?>.BadRequest("Item no no longer exists");
 
-        var quantity = Math.Clamp(request.Quantity, 1, 50);
+        var quantity = Math.Clamp(request.Quantity, 1, 5);
 
         if (variant.StockQuantity < quantity)
             return ApiResponse<int?>.BadRequest("Insufficient stock quantity");
@@ -40,8 +40,8 @@ public sealed class AddToCartHandler(AppDbContext context) : IScopedRequestHandl
         if (userCart is null)
         {
             var cart = Cart.Create(userId);
-            cart.AddCartItem(variant.Id, quantity);
             context.Carts.Add(cart);
+            cart.AddCartItem(variant.Id, quantity);
             canSave = true;
         }
         else

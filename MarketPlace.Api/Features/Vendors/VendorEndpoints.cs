@@ -20,6 +20,17 @@ public sealed class VendorEndpoints : IRequestEndpoints
         // Public endpoints
         group
             .MapGet(
+                "/",
+                async (
+                    [AsParameters] ListVendorsRequest request,
+                    [FromServices] ListVendorsHandler handler,
+                    CancellationToken cancellationToken
+                ) => (await handler.HandleAsync(request, cancellationToken)).ToMinimalApiResult()
+            )
+            .ProducesResponseWithProblem<CursorPagedResponse<VendorProfileResponse, Guid?>>(400);
+
+        group
+            .MapGet(
                 "/{vendorId:guid}",
                 async (
                     [FromRoute] Guid vendorId,
@@ -41,7 +52,22 @@ public sealed class VendorEndpoints : IRequestEndpoints
             .ProducesResponseWithProblem<VendorProfileResponse>(404);
 
         // Protected endpoints
-        var protectedGroup = group.RequireAuthorization();
+        var protectedGroup = group.MapGroup("").RequireAuthorization();
+
+        protectedGroup
+            .MapPut(
+                "/profile",
+                async (
+                    [FromBody] UpdateVendorProfileRequest request,
+                    [FromServices] UpdateVendorProfileHandler handler,
+                    ClaimsPrincipal user,
+                    CancellationToken cancellationToken
+                ) =>
+                    (
+                        await handler.HandleAsync(user.UserId, request, cancellationToken)
+                    ).ToMinimalApiResult()
+            )
+            .WithValidation<UpdateVendorProfileRequest>();
 
         protectedGroup
             .MapPost(
@@ -57,5 +83,47 @@ public sealed class VendorEndpoints : IRequestEndpoints
                     ).ToMinimalApiResult()
             )
             .WithValidation<VendorOnboardingRequest>();
+
+        var adminGroup = group.MapGroup("").RequireAuthorization();
+
+        adminGroup.MapPost(
+            "/{vendorId:guid}/approve",
+            async (
+                [FromRoute] Guid vendorId,
+                [FromServices] ApproveVendorHandler handler,
+                ClaimsPrincipal user,
+                CancellationToken cancellationToken
+            ) =>
+                (
+                    await handler.HandleAsync(vendorId, user.UserId, cancellationToken)
+                ).ToMinimalApiResult()
+        );
+
+        adminGroup.MapPost(
+            "/{vendorId:guid}/suspend",
+            async (
+                [FromRoute] Guid vendorId,
+                [FromBody] SuspendVendorRequest request,
+                [FromServices] SuspendVendorHandler handler,
+                ClaimsPrincipal user,
+                CancellationToken cancellationToken
+            ) =>
+                (
+                    await handler.HandleAsync(vendorId, request, user.UserId, cancellationToken)
+                ).ToMinimalApiResult()
+        );
+
+        adminGroup.MapPost(
+            "/{vendorId:guid}/reactivate",
+            async (
+                [FromRoute] Guid vendorId,
+                [FromServices] ReactivateVendorHandler handler,
+                ClaimsPrincipal user,
+                CancellationToken cancellationToken
+            ) =>
+                (
+                    await handler.HandleAsync(vendorId, user.UserId, cancellationToken)
+                ).ToMinimalApiResult()
+        );
     }
 }

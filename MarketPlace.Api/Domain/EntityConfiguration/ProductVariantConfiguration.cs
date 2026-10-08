@@ -17,6 +17,7 @@ public sealed class ProductVariantConfiguration : IEntityTypeConfiguration<Produ
         builder.Property(pv => pv.Sku).IsRequired().HasMaxLength(100);
         builder.Property(pv => pv.PriceInKobo).IsRequired();
         builder.Property(pv => pv.StockQuantity).IsRequired();
+        builder.Property(pv => pv.Version).IsRowVersion();
         builder.HasIndex(pv => pv.Sku).IsUnique();
 
         builder.HasQueryFilter(pv => pv.Product.IsPublished);

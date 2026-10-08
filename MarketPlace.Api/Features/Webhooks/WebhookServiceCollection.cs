@@ -7,6 +7,8 @@ public static class WebhookServiceCollection
     extension(IServiceCollection service)
     {
         public IServiceCollection AddWebHookKeyedDispatchers() =>
-            service.AddKeyedScoped<IPaystackDispatcher, DispatchChargeSuccess>(PaystackEvents.ChargeSuccess);
+            service.AddKeyedScoped<IPaystackDispatcher, DispatchChargeSuccess>(
+                PaystackEvents.ChargeSuccess
+            );
     }
 }

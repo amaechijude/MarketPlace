@@ -30,6 +30,8 @@ public sealed class Product
     public required Guid VendorId { get; init; }
     public Vendor Vendor { get; private set; } = null!;
 
+    public Pgvector.Vector? Embedding { get; set; }
+
     public ICollection<ProductVariant> Variants { get; set; } = [];
 
     public void AddVariant(CreateVariantRequest request, DateTimeOffset createdAt, Guid createdby)

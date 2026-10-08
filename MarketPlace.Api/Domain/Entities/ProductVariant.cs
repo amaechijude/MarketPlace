@@ -9,6 +9,8 @@ public sealed class ProductVariant
     public int StockQuantity { get; set; }
     public Dictionary<string, string> Attributes { get; private set; } = [];
 
+    public uint Version { get; set; }
+
     // audit
     public DateTimeOffset CreatedAt { get; private init; }
     public Guid CreatedBy { get; private init; }

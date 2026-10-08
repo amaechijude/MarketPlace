@@ -11,7 +11,12 @@ public sealed class OrderItem
     public required long UnitPriceInKobo { get; init; }
     public required DateTimeOffset CreatedAt { get; init; }
 
+    public MarketPlace.Api.Domain.Entities.Enums.FulfillmentStatus FulfillmentStatus { get; set; } =
+        MarketPlace.Api.Domain.Entities.Enums.FulfillmentStatus.Pending;
+
     // Navigation
+    public required Guid VendorId { get; init; }
+    public Vendor Vendor { get; set; } = null!;
     public required Guid OrderId { get; init; }
     public Order Order { get; private set; } = null!;
 

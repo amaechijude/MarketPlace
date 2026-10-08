@@ -1,6 +1,7 @@
 using MarketPlace.Api.Common.ApiResponseFactory;
 using MarketPlace.Api.Common.Extensions;
 using MarketPlace.Api.Domain.DatabaseContext;
+using MarketPlace.Api.Domain.Entities;
 using MarketPlace.Api.Domain.Entities.Enums;
 using MarketPlace.Api.Infrastucture.PaymentHandlers.Paystack;
 using Microsoft.EntityFrameworkCore;
@@ -42,7 +43,7 @@ public sealed class ValidateCheckoutHandler(
             var order =
                 await context
                     .Orders.Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.ProductVariant)
+                        .ThenInclude(oi => oi.ProductVariant)
                     .Where(o => o.UserId == userId && o.PaymentReference == paymentReference)
                     .FirstOrDefaultAsync(cancellationToken)
                 ?? throw new CheckoutValidationException("Order not found");
@@ -77,10 +78,6 @@ public sealed class ValidateCheckoutHandler(
                 "Payment already marked as paid"
             );
         }
-        // catch (OrderStatusTransitionException ex)
-        // {
-        //     return ApiResponse<ValidateCheckoutResponse>.BadRequest(ex.Message);
-        // }
         catch (DbUpdateConcurrencyException)
         {
             return ApiResponse<ValidateCheckoutResponse>.BadRequest(

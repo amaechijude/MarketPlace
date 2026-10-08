@@ -3,6 +3,7 @@ using MarketPlace.Api.Common.Extensions;
 using MarketPlace.Api.Common.Normalizer;
 using MarketPlace.Api.Domain.DatabaseContext;
 using MarketPlace.Api.Domain.Entities;
+using MarketPlace.Api.Domain.Entities.Enums;
 using MarketPlace.Api.Domain.Entities.OwnedTypes;
 using MarketPlace.Api.Infrastucture.PaymentHandlers.Paystack;
 using Microsoft.EntityFrameworkCore;
@@ -38,14 +39,26 @@ public sealed class InitiateCheckoutHandler(
                 c.Id,
                 UserEmail = c.User.NormalizedEmail,
                 CartItemExists = c.CartItems.Any(),
+                c.CouponId,
+                Coupon = c.Coupon != null
+                    ? new
+                    {
+                        c.Coupon.Id,
+                        c.Coupon.DiscountType,
+                        c.Coupon.DiscountValue,
+                        c.Coupon.MaxDiscountAmountInKobo,
+                        c.Coupon.MinOrderAmountInKobo,
+                    }
+                    : null,
             })
             .FirstOrDefaultAsync(cancellationToken);
 
-        if (cart is null || !cart.CartItemExists)
+        if (cart is null || cart is { CartItemExists: false })
             return ApiResponse<CheckoutResponse>.BadRequest("Cart Empty");
 
         var cartItems = await context
             .CartItems.Include(ci => ci.ProductVariant)
+                .ThenInclude(pv => pv.Product)
             .Where(ci => ci.CartId == cart.Id)
             .ToListAsync(cancellationToken);
 
@@ -61,6 +74,7 @@ public sealed class InitiateCheckoutHandler(
             UserId = userId,
             PaymentReference = $"{Guid.NewGuid()}-{now:u}",
             ShippingFeeInKobo = shippingAddress.FeeInKobo,
+            CouponId = cart.CouponId,
         };
         long subtotalAmountInKobo = 0;
 
@@ -83,12 +97,42 @@ public sealed class InitiateCheckoutHandler(
                         UnitPriceInKobo = item.ProductVariant.PriceInKobo,
                         OrderId = order.Id,
                         ProductVariantId = item.ProductVariantId,
+                        VendorId = item.ProductVariant.Product.VendorId,
                         CreatedAt = now,
                     }
                 );
+                item.ProductVariant.StockQuantity -= item.Quantity;
             }
 
-            var totalAmountInKobo = order.AttachSubTotal(subtotalAmountInKobo);
+            long discountAmount = 0;
+            if (cart.Coupon is not null)
+            {
+                if (
+                    cart.Coupon.MinOrderAmountInKobo == null
+                    || subtotalAmountInKobo >= cart.Coupon.MinOrderAmountInKobo
+                )
+                {
+                    if (cart.Coupon.DiscountType == DiscountType.FixedAmount)
+                    {
+                        discountAmount = cart.Coupon.DiscountValue;
+                    }
+                    else
+                    {
+                        discountAmount = (long)(
+                            subtotalAmountInKobo * (cart.Coupon.DiscountValue / 100.0)
+                        );
+                    }
+
+                    if (
+                        cart.Coupon.MaxDiscountAmountInKobo.HasValue
+                        && discountAmount > cart.Coupon.MaxDiscountAmountInKobo.Value
+                    )
+                        discountAmount = cart.Coupon.MaxDiscountAmountInKobo.Value;
+                }
+            }
+
+            var totalAmountInKobo = order.AttachSubTotal(subtotalAmountInKobo, discountAmount);
+
             if (orderItems.Count <= 0 || order.TotalInKobo <= 0)
                 return ApiResponse<CheckoutResponse>.BadRequest("Empty order");
 
@@ -121,6 +165,13 @@ public sealed class InitiateCheckoutHandler(
             await context
                 .CartItems.Where(c => c.CartId == cart.Id)
                 .ExecuteDeleteAsync(cancellationToken);
+
+            await context
+                .Carts.Where(c => c.Id == cart.Id)
+                .ExecuteUpdateAsync(
+                    s => s.SetProperty(c => c.CouponId, (Guid?)null),
+                    cancellationToken
+                );
 
             return ApiResponse<CheckoutResponse>.Success(checkoutResponse);
         }
