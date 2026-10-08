@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using MarketPlace.Api.Common.Extensions;
 using MarketPlace.Api.Domain.DatabaseContext;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +8,15 @@ namespace MarketPlace.Api.Infrastucture.Database;
 
 public static class DatabaseConfig
 {
+    public static IServiceCollection AddAiInfrastructure(this IServiceCollection services)
+    {
+        services.AddSingleton<
+            MarketPlace.Api.Features.Products.SearchProduct.IEmbeddingService,
+            MarketPlace.Api.Infrastucture.AI.FakeEmbeddingService
+        >();
+        return services;
+    }
+
     public static IServiceCollection AddDatabaseInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration
@@ -31,6 +40,7 @@ public static class DatabaseConfig
                     dbValue.ConnectionString,
                     options =>
                     {
+                        options.UseVector();
                         options.EnableRetryOnFailure(
                             maxRetryCount: 5,
                             maxRetryDelay: TimeSpan.FromSeconds(30),

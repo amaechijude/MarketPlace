@@ -1,5 +1,4 @@
 using System.Reflection;
-using Asp.Versioning;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Scalar.AspNetCore;

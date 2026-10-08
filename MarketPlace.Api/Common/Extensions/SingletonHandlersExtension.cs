@@ -6,10 +6,7 @@ public static class SingletonHandlersExtension
 {
     extension(IServiceCollection services)
     {
-
-        public IServiceCollection AddSingletonHandlers(
-            Assembly assembly
-        )
+        public IServiceCollection AddSingletonHandlers(Assembly assembly)
         {
             var type = typeof(ISingletonMarker);
 
@@ -27,8 +24,6 @@ public static class SingletonHandlersExtension
             return services;
         }
     }
-
 }
-
 
 public interface ISingletonMarker;

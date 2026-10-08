@@ -1,8 +1,8 @@
+using System.Threading.RateLimiting;
 using MarketPlace.Api.Common.Extensions;
 using MarketPlace.Api.Infrastucture.RateLimiting.Redis;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
-using System.Threading.RateLimiting;
 
 namespace MarketPlace.Api.Infrastucture.RateLimiting;
 
@@ -12,7 +12,8 @@ public static class RateLimitingExtension
     {
         public IServiceCollection AddRateLimitingInfrastructure(IConfiguration configuration)
         {
-            services.AddCustomOptions(configuration)
+            services
+                .AddCustomOptions(configuration)
                 .AddCustomRedisRateLimiter()
                 .AddRateLimiter(options =>
                 {
@@ -49,35 +50,55 @@ public static class RateLimitingExtension
 
         private IServiceCollection AddCustomOptions(IConfiguration configuration)
         {
-            services.AddOptions<IpAddresTokenBucketOptions>().Bind(configuration.GetSection(nameof(IpAddresTokenBucketOptions))).ValidateDataAnnotations().ValidateOnStart();
-            services.AddOptions<EmailAddresTokenBucketOptions>().Bind(configuration.GetSection(nameof(EmailAddresTokenBucketOptions))).ValidateDataAnnotations().ValidateOnStart();
+            services
+                .AddOptions<IpAddresTokenBucketOptions>()
+                .Bind(configuration.GetSection(nameof(IpAddresTokenBucketOptions)))
+                .ValidateDataAnnotations()
+                .ValidateOnStart();
+            services
+                .AddOptions<EmailAddresTokenBucketOptions>()
+                .Bind(configuration.GetSection(nameof(EmailAddresTokenBucketOptions)))
+                .ValidateDataAnnotations()
+                .ValidateOnStart();
             return services;
         }
 
         private IServiceCollection AddCustomRedisRateLimiter()
         {
             services.AddKeyedSingleton<ITokenBucketLimiter, TokenBucketLimiter>(
-              IpAddresTokenBucketOptions.Key,
-              (sp, _) =>
-              {
-                  var option = sp.GetRequiredService<IOptions<IpAddresTokenBucketOptions>>().Value;
-
-                  return new TokenBucketLimiter(sp.GetRequiredService<IConnectionMultiplexer>(), option.Capacity, option.RefillRate, option.RefillIntervalSeconds);
-              }
-          );
-
-            services.AddKeyedSingleton<ITokenBucketLimiter, TokenBucketLimiter>(EmailAddresTokenBucketOptions.Key
-                ,
+                IpAddresTokenBucketOptions.Key,
                 (sp, _) =>
                 {
-                    var option = sp.GetRequiredService<IOptions<EmailAddresTokenBucketOptions>>().Value;
+                    var option = sp.GetRequiredService<
+                        IOptions<IpAddresTokenBucketOptions>
+                    >().Value;
 
-                    return new TokenBucketLimiter(sp.GetRequiredService<IConnectionMultiplexer>(), option.Capacity, option.RefillRate, option.RefillIntervalSeconds);
+                    return new TokenBucketLimiter(
+                        sp.GetRequiredService<IConnectionMultiplexer>(),
+                        option.Capacity,
+                        option.RefillRate,
+                        option.RefillIntervalSeconds
+                    );
+                }
+            );
+
+            services.AddKeyedSingleton<ITokenBucketLimiter, TokenBucketLimiter>(
+                EmailAddresTokenBucketOptions.Key,
+                (sp, _) =>
+                {
+                    var option = sp.GetRequiredService<
+                        IOptions<EmailAddresTokenBucketOptions>
+                    >().Value;
+
+                    return new TokenBucketLimiter(
+                        sp.GetRequiredService<IConnectionMultiplexer>(),
+                        option.Capacity,
+                        option.RefillRate,
+                        option.RefillIntervalSeconds
+                    );
                 }
             );
             return services;
         }
-   
-   
     }
 }

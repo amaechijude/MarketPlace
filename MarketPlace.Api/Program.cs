@@ -15,10 +15,7 @@ using MarketPlace.Api.Infrastucture.MediaStorage;
 using MarketPlace.Api.Infrastucture.OtpValidation;
 using MarketPlace.Api.Infrastucture.PaymentHandlers;
 using MarketPlace.Api.Infrastucture.RateLimiting;
-using MarketPlace.Api.Infrastucture.RateLimiting.Redis;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Hybrid;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -80,6 +77,7 @@ builder
     .Services.AddAuthInfrastructure()
     .AddCacheInfrastructure(builder.Configuration) //cache
     .AddDatabaseInfrastructure(builder.Configuration) // db
+    .AddAiInfrastructure()
     .AddRateLimitingInfrastructure(builder.Configuration) // ratelimit
     .AddMediaStorageInfrastructure(builder.Configuration) // r2
     .AddPaymentHandlersInfrastructure(builder.Configuration)

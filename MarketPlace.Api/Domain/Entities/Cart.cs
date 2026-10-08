@@ -7,6 +7,10 @@ public sealed class Cart
     // Navigation properties
     public Guid UserId { get; private init; }
     public User User { get; set; } = null!;
+
+    public Guid? CouponId { get; set; }
+    public Coupon? Coupon { get; set; }
+
     public ICollection<CartItem> CartItems { get; set; } = [];
 
     public static Cart Create(Guid userId) => new() { Id = Guid.CreateVersion7(), UserId = userId };

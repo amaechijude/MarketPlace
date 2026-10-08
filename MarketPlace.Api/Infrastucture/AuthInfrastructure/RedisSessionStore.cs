@@ -30,10 +30,9 @@ public sealed class RedisSessionStore(
         _ = tx.KeyExpireAsync(UserSessionsKey(userId), CustomAuthSchemeOptions.DefaultTimeSpan);
 
         var committed = await tx.ExecuteAsync();
-        if (!committed)
-            throw new InvalidOperationException("Failed to create auth session in Redis.");
-
-        return (token, expiresOn);
+        return !committed
+            ? throw new InvalidOperationException("Failed to create auth session in Redis.")
+            : (token, expiresOn);
     }
 
     public override async Task<AuthSessionRecord?> GetSessionAsync(
@@ -51,10 +50,6 @@ public sealed class RedisSessionStore(
         }
         catch (JsonException)
         {
-            // Corrupt or stale-schema payload — treat as "no valid session"
-            // rather than letting this exception surface from what looks like
-            // a simple lookup. Consider logging this if it recurs, since it
-            // usually signals a deploy-time schema mismatch or bad data.
             return null;
         }
     }
@@ -65,10 +60,6 @@ public sealed class RedisSessionStore(
         CancellationToken ct
     )
     {
-        // Create the new session before deleting the old one. If anything
-        // fails in between, the caller keeps a working (old) session instead
-        // of being silently logged out. Briefly having two valid tokens is a
-        // much safer failure mode than having zero.
         var (newToken, expiresOn) = await CreateAsync(record.UserId, record.Roles, ct);
         await DeleteAsync(token, ct);
         return (newToken, expiresOn);
@@ -82,7 +73,6 @@ public sealed class RedisSessionStore(
         var json = await _redis.StringGetAsync(tokenHash);
         if (json.IsNullOrEmpty)
             return;
-
 
         Guid? userId = null;
         try
@@ -99,7 +89,6 @@ public sealed class RedisSessionStore(
         _ = tx.KeyDeleteAsync(tokenHash);
         if (userId is { } uid)
             _ = tx.SetRemoveAsync(UserSessionsKey(uid), tokenHash);
-
 
         await tx.ExecuteAsync();
     }

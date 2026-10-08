@@ -1,5 +1,5 @@
-using MarketPlace.Api.Common.ValidationAttributes;
 using System.ComponentModel.DataAnnotations;
+using MarketPlace.Api.Common.ValidationAttributes;
 
 namespace MarketPlace.Api.Features.Auth.Register;
 

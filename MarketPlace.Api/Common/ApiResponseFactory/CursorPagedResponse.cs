@@ -1,5 +1,4 @@
 using JetBrains.Annotations;
-using MarketPlace.Api.Features.ShippingAddresses.ListShippingAddress;
 
 namespace MarketPlace.Api.Common.ApiResponseFactory;
 

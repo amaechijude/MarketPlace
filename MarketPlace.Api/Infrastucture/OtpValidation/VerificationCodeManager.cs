@@ -1,8 +1,8 @@
-using MarketPlace.Api.Common.Extensions;
-using Microsoft.Extensions.Caching.Hybrid;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Channels;
+using MarketPlace.Api.Common.Extensions;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace MarketPlace.Api.Infrastucture.OtpValidation;
 
@@ -12,7 +12,6 @@ public sealed class VerificationCodeManager(
     Channel<OtpEmailRequest> emailChannel
 ) : ISingletonMarker
 {
-
     private static readonly TimeSpan maxLifeTime = TimeSpan.FromMinutes(10);
 
     public async ValueTask<Guid> GenerateAndDispatchOtp(
@@ -22,8 +21,6 @@ public sealed class VerificationCodeManager(
         CancellationToken cancellationToken
     )
     {
-
-
         string rawCode = RandomNumberGenerator.GetInt32(1_000_000).ToString("D6");
 
         OtpVerificationCode value = new(

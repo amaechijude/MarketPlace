@@ -1,5 +1,5 @@
-﻿using MarketPlace.Api.Common.Extensions;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using MarketPlace.Api.Common.Extensions;
 
 namespace MarketPlace.Api.Common.ValidationAttributes;
 
@@ -15,9 +15,7 @@ public sealed class NoInBetweenWhiteSpaceAttribute : ValidationAttribute
     protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
     {
         if (value is not string stValue || stValue.ContainsWhiteSpace())
-        {
             return new ValidationResult(FormatErrorMessage(validationContext.DisplayName));
-        }
 
         return ValidationResult.Success;
     }

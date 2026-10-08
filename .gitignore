@@ -485,3 +485,8 @@ $RECYCLE.BIN/
 MarketPlace.Api/appsettings.json
 
 MarketPlace.Api/output/*
+patch_efcore_vector.sh
+patch_endpoints.py
+patch_order.sh
+patch_product_vector.sh
+patch_vendor.sh

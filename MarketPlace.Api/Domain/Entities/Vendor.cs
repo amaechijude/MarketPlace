@@ -83,6 +83,23 @@ public sealed class Vendor
         UpdatedAt = reactivationDate;
     }
 
+    public void UpdateProfile(
+        string? description,
+        string? logoUrl,
+        string? supportPhone,
+        string? businessAddress,
+        string? country,
+        DateTimeOffset updatedAt
+    )
+    {
+        Description = description;
+        LogoUrl = logoUrl;
+        SupportPhone = supportPhone;
+        BusinessAddress = businessAddress;
+        Country = country;
+        UpdatedAt = updatedAt;
+    }
+
     public void UpdateBusinessRegistrationNumber(
         string businessRegistrationNumber,
         Guid updatedBy,

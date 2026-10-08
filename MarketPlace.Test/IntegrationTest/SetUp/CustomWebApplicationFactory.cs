@@ -1,4 +1,4 @@
-﻿using MarketPlace.Api.Domain.DatabaseContext;
+using MarketPlace.Api.Domain.DatabaseContext;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +12,7 @@ namespace MarketPlace.Test.IntegrationTest.SetUp;
 public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly PostgreSqlContainer _postgresContainer = new PostgreSqlBuilder(
-        "postgres:18-alpine"
+        "pgvector/pgvector:pg16"
     )
         .WithDatabase("marketplace")
         .WithUsername("marketplace")
@@ -55,6 +55,7 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
                     _postgresContainer.GetConnectionString(),
                     npgsqlOptionsAction =>
                     {
+                        npgsqlOptionsAction.UseVector();
                         npgsqlOptionsAction.EnableRetryOnFailure(
                             maxRetryCount: 5,
                             maxRetryDelay: TimeSpan.FromSeconds(30),

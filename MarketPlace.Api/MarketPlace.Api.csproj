@@ -26,6 +26,7 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
+    <PackageReference Include="Pgvector.EntityFrameworkCore" />
     <PackageReference Include="RabbitMQ.Client" />
     <PackageReference Include="RedisRateLimiting.AspNetCore" />
     <PackageReference Include="StackExchange.Redis" />

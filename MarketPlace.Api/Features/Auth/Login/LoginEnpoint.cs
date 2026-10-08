@@ -1,7 +1,4 @@
 using MarketPlace.Api.Common.Extensions;
-using MarketPlace.Api.Common.Normalizer;
-using MarketPlace.Api.Infrastucture.RateLimiting;
-using MarketPlace.Api.Infrastucture.RateLimiting.Redis;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MarketPlace.Api.Features.Auth.Login;

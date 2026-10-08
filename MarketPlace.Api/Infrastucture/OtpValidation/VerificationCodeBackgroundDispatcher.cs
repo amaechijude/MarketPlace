@@ -1,5 +1,5 @@
-using MarketPlace.Api.Infrastucture.Email;
 using System.Threading.Channels;
+using MarketPlace.Api.Infrastucture.Email;
 
 namespace MarketPlace.Api.Infrastucture.OtpValidation;
 
@@ -28,6 +28,7 @@ public sealed class VerificationCodeBackgroundDispatcher(
             }
         }
     }
+
     private async Task DispatchAsync(OtpEmailRequest request, CancellationToken cancellationToken)
     {
         await using var scope = serviceProvider.CreateAsyncScope();

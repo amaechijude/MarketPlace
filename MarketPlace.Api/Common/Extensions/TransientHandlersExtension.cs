@@ -6,9 +6,7 @@ public static class TransientHandlersExtension
 {
     extension(IServiceCollection services)
     {
-        public IServiceCollection AddTransientHandlers(
-            Assembly assembly
-        )
+        public IServiceCollection AddTransientHandlers(Assembly assembly)
         {
             var type = typeof(ITransientMarker);
 
@@ -27,6 +25,5 @@ public static class TransientHandlersExtension
         }
     }
 }
-
 
 public interface ITransientMarker;

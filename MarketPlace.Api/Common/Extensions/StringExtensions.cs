@@ -7,6 +7,7 @@ public static class StringExtensions
     extension(string value)
     {
         public bool ContainsWhiteSpace() => value.Trim().Contains(' ');
+
         public bool HasNoWhiteSpaceBetweenChar() => !value.ContainsWhiteSpace();
 
         public bool ContainsSpecialCharacter() =>
