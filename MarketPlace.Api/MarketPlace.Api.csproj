@@ -36,6 +36,7 @@
     <PackageReference Include="Aspire.RabbitMQ.Client" />
     <PackageReference Include="Scalar.AspNetCore" />
     <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
 
   <ItemGroup>
