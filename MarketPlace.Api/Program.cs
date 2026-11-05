@@ -104,9 +104,6 @@ if (app.Environment.IsDevelopment())
 // 1 Exception HAndling
 app.UseExceptionHandler();
 
-app.UseHttpsRedirection();
-app.UseHsts();
-
 app.UseRateLimiter();
 
 // CORS

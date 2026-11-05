@@ -1,0 +1,84 @@
+services:
+  redis:
+    image: "docker.io/redis:8.6"
+    restart: unless-stopped
+    user: redis
+    # Overriding the entrypoint skips the image's privilege drop, hence `user: redis`.
+    # `exec` makes redis-server PID 1 so SIGTERM triggers a clean save on `docker stop`.
+    entrypoint: ["/bin/sh"]
+    command:
+      - "-c"
+      - >-
+        exec redis-server
+        --requirepass "$$REDIS_PASSWORD"
+        --save 60 1
+        --appendonly yes
+        --maxmemory 256mb
+        --maxmemory-policy noeviction
+    environment:
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
+      REDISCLI_AUTH: "${REDIS_PASSWORD}" # lets the healthcheck authenticate
+    expose:
+      - "6379" # internal only, never publish Redis
+    volumes:
+      - marketplace-redis-data:/data
+    networks:
+      - market
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep -q PONG"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    mem_limit: 512m
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  marketplace-api:
+    image: "${MARKETPLACE_API_IMAGE}" # pin a specific tag or digest, never :latest
+    restart: unless-stopped
+    init: true
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Production"
+      ASPNETCORE_FORWARDEDHEADERS_ENABLED: "true" # trust Caddy's X-Forwarded-* (port is loopback-only)
+      ConnectionStrings__Database: "${DATABASE_URL}"
+      ConnectionStrings__Redis: "redis:6379,password=${REDIS_PASSWORD}"
+    ports:
+      # Loopback only: host Caddy reaches it, the internet cannot.
+      - "127.0.0.1:${MARKETPLACE_API_PORT}:${MARKETPLACE_API_PORT}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # reach bare-metal Postgres on the host
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - market
+    mem_limit: 1g
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL # add NET_BIND_SERVICE only if the port is < 1024
+    # read_only: true                               # enable if the app tolerates it
+    # tmpfs:
+    #   - /tmp
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  market:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24 # gateway 172.30.0.1; used in pg_hba.conf and ufw
+
+volumes:
+  marketplace-redis-data:
+    driver: local

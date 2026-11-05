@@ -19,6 +19,5 @@ public sealed class ProductsEndpoint : IRequestEndpoints
         UpdateProductEndpoint.Map(group);
         GetProductEndpoint.Map(group);
         ListProductEndpoint.Map(group);
-        SearchProductEndpoint.Map(group);
     }
 }
