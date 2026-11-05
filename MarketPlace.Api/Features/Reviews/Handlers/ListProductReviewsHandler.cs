@@ -33,16 +33,23 @@ public sealed class ListProductReviewsHandler(AppDbContext context) : IScopedReq
             .Select(r => new ReviewResponse(r.Id, r.Rating, r.Comment, r.CreatedAt, r.User.Email))
             .ToListAsync(cancellationToken);
 
-        var hasNextPage = reviews.Count > pageSize;
+        var count = reviews.Count;
+        var hasNextPage = count > pageSize;
+        Guid? nextCursor = null;
+
         if (hasNextPage)
         {
-            reviews.RemoveAt(reviews.Count - 1);
+            nextCursor = reviews[^1].Id;
+            reviews.RemoveAt(count - 1);
         }
 
-        Guid? nextCursor = hasNextPage ? reviews[^1].Id : null;
-
-        return ApiResponse<CursorPagedResponse<ReviewResponse, Guid?>>.Success(
-            new CursorPagedResponse<ReviewResponse, Guid?>(reviews, nextCursor, hasNextPage)
+        var response = new CursorPagedResponse<ReviewResponse, Guid?>(
+            Items: reviews,
+            NextCursor: nextCursor,
+            HasNextPage: hasNextPage,
+            Count: count
         );
+
+        return ApiResponse<CursorPagedResponse<ReviewResponse, Guid?>>.Success(response);
     }
 }

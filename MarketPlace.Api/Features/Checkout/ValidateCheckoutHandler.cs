@@ -1,7 +1,6 @@
 using MarketPlace.Api.Common.ApiResponseFactory;
 using MarketPlace.Api.Common.Extensions;
 using MarketPlace.Api.Domain.DatabaseContext;
-using MarketPlace.Api.Domain.Entities;
 using MarketPlace.Api.Domain.Entities.Enums;
 using MarketPlace.Api.Infrastucture.PaymentHandlers.Paystack;
 using Microsoft.EntityFrameworkCore;

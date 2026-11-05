@@ -26,15 +26,19 @@ public sealed class ListCategoriesHandler(AppDbContext context) : IScopedRequest
 
         var count = categories.Count;
         var hasNextPage = count > pageSize;
-        if (hasNextPage)
-            categories.RemoveAt(count - 1);
+        int? nextCursor = null;
 
-        int? nextCursor = hasNextPage ? categories[^1].Id : null;
+        if (hasNextPage)
+        {
+            nextCursor = categories[^1].Id;
+            categories.RemoveAt(count - 1);
+        }
 
         var response = new CursorPagedResponse<CategoryResponse, int?>(
             Items: categories,
             NextCursor: nextCursor,
-            HasNextPage: hasNextPage
+            HasNextPage: hasNextPage,
+            Count: count
         );
 
         return ApiResponse<CursorPagedResponse<CategoryResponse, int?>>.Success(response);

@@ -49,16 +49,18 @@ public sealed class ListMyOrdersHandler(AppDbContext context) : IScopedRequestHa
             ))
             .ToListAsync(cancellationToken);
 
-        var hasNextPage = orders.Count > pageSize;
+        var count = orders.Count;
+        var hasNextPage = count > pageSize;
+
+        Guid? nextCursor = null;
         if (hasNextPage)
         {
+            nextCursor = orders[^1].Id;
             orders.RemoveAt(orders.Count - 1);
         }
 
-        Guid? nextCursor = hasNextPage ? orders[^1].Id : null;
-
         return ApiResponse<CursorPagedResponse<OrderResponse, Guid?>>.Success(
-            new CursorPagedResponse<OrderResponse, Guid?>(orders, nextCursor, hasNextPage)
+            new CursorPagedResponse<OrderResponse, Guid?>(orders, nextCursor, hasNextPage, count)
         );
     }
 }

@@ -29,18 +29,21 @@ public sealed class ListVendorsHandler(AppDbContext context) : IScopedRequestHan
             .Select(VendorExpression)
             .ToListAsync(cancellationToken);
 
-        var hasNextPage = vendors.Count > pageSize;
+        var count = vendors.Count;
+        var hasNextPage = count > pageSize;
+        Guid? nextCursor = null;
+
         if (hasNextPage)
         {
-            vendors.RemoveAt(vendors.Count - 1);
+            nextCursor = vendors[^1].VendorId;
+            vendors.RemoveAt(count - 1);
         }
-
-        Guid? nextCursor = hasNextPage ? vendors[^1].VendorId : null;
 
         var response = new CursorPagedResponse<VendorProfileResponse, Guid?>(
             Items: vendors,
             NextCursor: nextCursor,
-            HasNextPage: hasNextPage
+            HasNextPage: hasNextPage,
+            Count: count
         );
 
         return ApiResponse<CursorPagedResponse<VendorProfileResponse, Guid?>>.Success(response);

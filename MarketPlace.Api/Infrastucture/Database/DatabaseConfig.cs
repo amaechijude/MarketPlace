@@ -8,15 +8,6 @@ namespace MarketPlace.Api.Infrastucture.Database;
 
 public static class DatabaseConfig
 {
-    public static IServiceCollection AddAiInfrastructure(this IServiceCollection services)
-    {
-        services.AddSingleton<
-            MarketPlace.Api.Features.Products.SearchProduct.IEmbeddingService,
-            MarketPlace.Api.Infrastucture.AI.FakeEmbeddingService
-        >();
-        return services;
-    }
-
     public static IServiceCollection AddDatabaseInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration

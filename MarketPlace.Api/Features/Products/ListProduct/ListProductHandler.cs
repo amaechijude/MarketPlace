@@ -41,15 +41,19 @@ public sealed class ListProductHandler(AppDbContext context) : IScopedRequestHan
 
         var count = products.Count;
         var hasNextPage = count > pageSize;
-        if (hasNextPage)
-            products.RemoveAt(count - 1);
+        Guid? nextCursor = null;
 
-        Guid? nextCursor = hasNextPage ? products[^1].Id : null;
+        if (hasNextPage)
+        {
+            nextCursor = products[^1].Id;
+            products.RemoveAt(count - 1);
+        }
 
         var response = new CursorPagedResponse<ListProductResponse, Guid?>(
             Items: products,
             NextCursor: nextCursor,
-            HasNextPage: hasNextPage
+            HasNextPage: hasNextPage,
+            Count: count
         );
         return ApiResponse<CursorPagedResponse<ListProductResponse, Guid?>>.Success(response);
     }

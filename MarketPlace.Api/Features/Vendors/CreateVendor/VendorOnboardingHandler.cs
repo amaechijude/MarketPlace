@@ -32,7 +32,7 @@ public sealed class VendorOnboardingHandler(
         if (existingVendor is not null)
             return ApiResponse<int>.Conflict("User already has an active vendor account.");
 
-        var slug = Slugger.Slugify(request.BusinessName);
+        var slug = Slugger.Slugify(request.StoreSlug);
 
         // Check if store slug is already taken
         var slugTaken = await context

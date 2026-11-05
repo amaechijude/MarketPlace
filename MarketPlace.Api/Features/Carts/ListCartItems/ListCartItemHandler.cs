@@ -29,15 +29,18 @@ public sealed class ListCartItemHandler(AppDbContext context) : IScopedRequestHa
 
         var count = cartItems.Count;
         var hasNextPage = count > pageSize;
+        Guid? nextCursor = null;
         if (hasNextPage)
+        {
+            nextCursor = cartItems[^1].Id;
             cartItems.RemoveAt(count - 1);
-
-        Guid? nextCursor = hasNextPage ? cartItems[^1].Id : null;
+        }
 
         var response = new CursorPagedResponse<CartItemResponse, Guid?>(
             Items: cartItems,
             NextCursor: nextCursor,
-            HasNextPage: hasNextPage
+            HasNextPage: hasNextPage,
+            Count: count
         );
 
         return ApiResponse<CursorPagedResponse<CartItemResponse, Guid?>>.Success(response);

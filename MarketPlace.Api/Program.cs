@@ -6,7 +6,6 @@ using MarketPlace.Api.Common.ExceptionHandler;
 using MarketPlace.Api.Common.Extensions;
 using MarketPlace.Api.Features.Auth.Login;
 using MarketPlace.Api.Features.Auth.Register;
-using MarketPlace.Api.Features.Webhooks;
 using MarketPlace.Api.Infrastucture.AuthInfrastructure;
 using MarketPlace.Api.Infrastucture.Cache;
 using MarketPlace.Api.Infrastucture.Database;
@@ -66,9 +65,6 @@ builder
     .AddSingletonHandlers(assembly)
     .AddTransientHandlers(assembly);
 
-// webhook keyed
-builder.Services.AddWebHookKeyedDispatchers();
-
 // Authz
 builder.Services.AddAuthorization();
 
@@ -77,7 +73,6 @@ builder
     .Services.AddAuthInfrastructure()
     .AddCacheInfrastructure(builder.Configuration) //cache
     .AddDatabaseInfrastructure(builder.Configuration) // db
-    .AddAiInfrastructure()
     .AddRateLimitingInfrastructure(builder.Configuration) // ratelimit
     .AddMediaStorageInfrastructure(builder.Configuration) // r2
     .AddPaymentHandlersInfrastructure(builder.Configuration)

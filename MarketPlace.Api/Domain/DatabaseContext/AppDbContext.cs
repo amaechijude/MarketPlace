@@ -22,11 +22,6 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<User> Users => Set<User>();
     public DbSet<Vendor> Vendors => Set<Vendor>();
     public DbSet<Review> Reviews => Set<Review>();
-    public DbSet<WishlistItem> WishlistItems => Set<WishlistItem>();
-
-    public DbSet<Wallet> Wallets => Set<Wallet>();
-    public DbSet<WalletTransaction> WalletTransactions => Set<WalletTransaction>();
-    public DbSet<PayoutRequest> PayoutRequests => Set<PayoutRequest>();
     public DbSet<RefundRequest> RefundRequests => Set<RefundRequest>();
     public DbSet<Coupon> Coupons => Set<Coupon>();
 
