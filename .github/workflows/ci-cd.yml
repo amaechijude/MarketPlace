@@ -82,6 +82,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: ./Dockerfile.efbundle
           target: migrations
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.migration-meta.outputs.tags }}
