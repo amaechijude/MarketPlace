@@ -1,7 +1,12 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS migration-build
 WORKDIR /src
 
-# Restore first so this layer is cached when only source code changes
+# Restore first so this layer is cached when only source code changes.
+# Copy the shared build props and all project references needed for evaluation
+# before restore; otherwise restore skips referenced projects and fails with
+# NETSDK1013 because TargetFramework is defined in Directory.Build.props.
+COPY Directory.Build.props Directory.Packages.props ./
+COPY MarketPlace.ServiceDefaults/MarketPlace.ServiceDefaults.csproj MarketPlace.ServiceDefaults/
 COPY MarketPlace.Api/MarketPlace.Api.csproj MarketPlace.Api/
 RUN dotnet restore MarketPlace.Api/MarketPlace.Api.csproj
 
