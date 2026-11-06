@@ -18,6 +18,7 @@ services:
     environment:
       REDIS_PASSWORD: "${REDIS_PASSWORD}"
       REDISCLI_AUTH: "${REDIS_PASSWORD}" # lets the healthcheck authenticate
+
     expose:
       - "6379" # internal only, never publish Redis
     volumes:
@@ -54,6 +55,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway" # reach bare-metal Postgres on the host
     depends_on:
+      marketplace-migrations:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
     networks:
@@ -66,6 +69,24 @@ services:
     # read_only: true                               # enable if the app tolerates it
     # tmpfs:
     #   - /tmp
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  marketplace-migrations:
+    image: "${MARKETPLACE_MIGRATIONS_IMAGE}" # CI publishes this image as :latest
+    restart: "no"
+    command: ["--connection", "${DATABASE_URL}"]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - market
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     logging:
       driver: json-file
       options:

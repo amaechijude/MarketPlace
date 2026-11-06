@@ -93,11 +93,7 @@ app.MapDefaultEndpoints();
 
 app.UseForwardedHeaders();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApiDocumentation();
-}
+app.MapOpenApiDocumentation();
 
 // Middlewares
 
@@ -116,11 +112,6 @@ app.UseAuthorization();
 app.UseMiddleware<RefreshTokenMiddleware>();
 
 // Antiforgery
-
-if (app.Environment.IsDevelopment())
-    app.MapGet("/", (HttpResponse response) => response.Redirect("/scalar"))
-        .ExcludeFromApiReference()
-        .ExcludeFromDescription();
 
 // Map endpoints
 app.MapRequestEndpoints();

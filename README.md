@@ -160,7 +160,7 @@ Once running, access the interactive API documentation:
 
 ### Entity Framework Core
 
-This project uses Entity Framework Core with PostgreSQL. The database and migrations are managed through the Aspire orchestrator.
+This project uses Entity Framework Core with PostgreSQL. When deploying with Docker Compose, the CI workflow publishes a separate migration image containing an EF Core migration bundle tagged `:latest`. Set `MARKETPLACE_MIGRATIONS_IMAGE` to that image; Compose runs the bundle with `DATABASE_URL` and waits for it to complete successfully before starting the API.
 
 ### Creating a New Migration
 

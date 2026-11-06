@@ -18,19 +18,7 @@ public static class RequestEndpointExtension
         Assembly assembly
     )
     {
-        // Api versioning
-        _ = services
-        // .AddApiVersioning(options =>
-        // {
-        //     options.ApiVersionReader = new UrlSegmentApiVersionReader(); // API versioning by URL segment (api/v1/users)
-        //     options.ReportApiVersions = true;
-        //     options.AssumeDefaultVersionWhenUnspecified = true;
-        // })
-        // .AddApiExplorer(options =>
-        // {
-        //     options.GroupNameFormat = "'v'VVV";
-        // })
-        .AddOpenApi();
+        _ = services.AddOpenApi();
 
         var endpoints = assembly
             .DefinedTypes.Where(t =>
@@ -43,6 +31,7 @@ public static class RequestEndpointExtension
                         IsGenericTypeDefinition: false
                     }
             )
+            .OrderBy(x => x.FullName, StringComparer.Ordinal)
             .Select(s => ServiceDescriptor.Transient(typeof(IRequestEndpoints), s));
 
         services.TryAddEnumerable(endpoints);
@@ -51,16 +40,9 @@ public static class RequestEndpointExtension
 
     public static void MapRequestEndpoints(this WebApplication app)
     {
-        // var versionSet = app.NewApiVersionSet()
-        //     .HasApiVersion(new ApiVersion(1))
-        //     .HasApiVersion(new ApiVersion(2))
-        //     .ReportApiVersions()
-        //     .Build();
-
         RouteGroupBuilder versionGroup = app.MapGroup("/api/v1");
-        // .WithApiVersionSet(versionSet);
 
-        var endpoints = app.Services.GetRequiredService<IEnumerable<IRequestEndpoints>>().Reverse();
+        var endpoints = app.Services.GetRequiredService<IEnumerable<IRequestEndpoints>>();
         foreach (var endpoint in endpoints)
             endpoint.Map(versionGroup);
     }
@@ -68,26 +50,9 @@ public static class RequestEndpointExtension
     public static void MapOpenApiDocumentation(this WebApplication app)
     {
         app.MapOpenApi();
-        // .WithDocumentPerVersion();
-
         app.MapScalarApiReference();
-
-        // app.MapScalarApiReference(options =>
-        // {
-        //     var descriptions = app.DescribeApiVersions();
-
-        //     for (var i = 0; i < descriptions.Count; i++)
-        //     {
-        //         var description = descriptions[i];
-
-        //         // isDefault is used to mark the default API version in Scalar.
-        //         // This decides which version is selected by default when users visit the Scalar UI.
-        //         options.AddDocument(
-        //             description.GroupName,
-        //             description.GroupName,
-        //             isDefault: i == 0
-        //         );
-        //     }
-        // });
+        app.MapGet("/", () => Results.Redirect("/scalar"))
+            .ExcludeFromApiReference()
+            .ExcludeFromDescription();
     }
 }
