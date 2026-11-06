@@ -11,8 +11,10 @@ using Microsoft.Extensions.Validation;
 namespace MarketPlace.Test.IntegrationTest.SetUp;
 
 public sealed class ServiceCollectionTests(CustomWebApplicationFactory factory)
-    : BaseIntegrationTest(factory)
+    : IClassFixture<CustomWebApplicationFactory>
 {
+    private readonly IServiceScope scope = factory.Services.CreateScope();
+
     [Fact]
     public void Validation_ShouldBeRegistered()
     {

@@ -20,10 +20,8 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
         .Build();
     private readonly RedisContainer _redisContainer = new RedisBuilder("redis:8.6").Build();
 
-    public async Task InitializeAsync()
-    {
+    public async Task InitializeAsync() =>
         await Task.WhenAll(_postgresContainer.StartAsync(), _redisContainer.StartAsync());
-    }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -67,6 +65,7 @@ public sealed class CustomWebApplicationFactory : WebApplicationFactory<Program>
             services.AddSingleton<IConnectionMultiplexer>(_ =>
                 ConnectionMultiplexer.Connect(_redisContainer.GetConnectionString())
             );
+            services.BuildServiceProvider().GetRequiredService<AppDbContext>().Database.Migrate();
         });
     }
 

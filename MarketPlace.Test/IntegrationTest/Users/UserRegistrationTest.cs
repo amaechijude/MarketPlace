@@ -6,8 +6,10 @@ using MarketPlace.Test.IntegrationTest.SetUp;
 namespace MarketPlace.Test.IntegrationTest.Users;
 
 public sealed class UserRegistrationTests(CustomWebApplicationFactory factory)
-    : BaseIntegrationTest(factory)
+    : IClassFixture<CustomWebApplicationFactory>
 {
+    public readonly HttpClient httpClient = factory.CreateClient();
+    public const string apiBaseUrlv1 = "api/v1";
     private const string registerUrl = $"{apiBaseUrlv1}/auth/register";
     private const string emailLoginUrl = $"{apiBaseUrlv1}/auth/login/email";
 
