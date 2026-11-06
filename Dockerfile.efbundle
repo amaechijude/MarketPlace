@@ -1,32 +1,27 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS migration-build
-WORKDIR /src
 
-# Restore first so this layer is cached when only source code changes.
-# Copy the shared build props and all project references needed for evaluation
-# before restore; otherwise restore skips referenced projects and fails with
-# NETSDK1013 because TargetFramework is defined in Directory.Build.props.
-COPY Directory.Build.props Directory.Packages.props ./
-COPY MarketPlace.ServiceDefaults/MarketPlace.ServiceDefaults.csproj MarketPlace.ServiceDefaults/
-COPY MarketPlace.Api/MarketPlace.Api.csproj MarketPlace.Api/
-RUN dotnet restore MarketPlace.Api/MarketPlace.Api.csproj
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+
+WORKDIR /src
 
 COPY . .
 
-RUN dotnet tool install --tool-path /tools dotnet-ef --version 10.0.12
+RUN dotnet tool install --global dotnet-ef
 
-ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ConnectionStrings__Database="Host=localhost;Username=postgres;Password=build;Database=marketplace;Port=5432"
+RUN dotnet restore
 
-RUN mkdir -p /out && /tools/dotnet-ef migrations bundle \
-    --project MarketPlace.Api/MarketPlace.Api.csproj \
-    --startup-project MarketPlace.Api/MarketPlace.Api.csproj \
-    --configuration Release \
-    --target-runtime linux-x64 \
+RUN dotnet ef migrations bundle \
+    --project MarketPlace.Api \
+    --startup-project MarketPlace.Api \
     --self-contained \
-    --force \
-    --output /out/efbundle
+    -r linux-x64 \
+    -o /out/efbundle
 
-FROM mcr.microsoft.com/dotnet/runtime-deps:10.0 AS migrations
+FROM mcr.microsoft.com/dotnet/runtime-deps:10.0
+
 WORKDIR /app
-COPY --from=migration-build /out/efbundle .
-ENTRYPOINT ["/app/efbundle"]
+
+COPY --from=build /out/efbundle .
+
+RUN chmod +x efbundle
+
+ENTRYPOINT ["./efbundle"]
