@@ -13,6 +13,7 @@ public sealed class ReviewConfiguration : IEntityTypeConfiguration<Review>
 
         builder.Property(x => x.Comment).HasMaxLength(1000);
         builder.Property(x => x.Rating).IsRequired();
+        builder.HasQueryFilter(x => x.Product.IsPublished);
 
         builder
             .HasOne(x => x.Product)

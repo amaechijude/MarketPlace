@@ -256,49 +256,6 @@ namespace MarketPlace.Api.Migrations
                     b.ToTable("OrderItems", (string)null);
                 });
 
-            modelBuilder.Entity("MarketPlace.Api.Domain.Entities.PayoutRequest", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<long>("AmountInKobo")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("BankAccountName")
-                        .HasColumnType("text");
-
-                    b.Property<string>("BankAccountNumber")
-                        .HasColumnType("text");
-
-                    b.Property<string>("BankName")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTimeOffset?>("ProcessedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("ProcessedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("RejectionReason")
-                        .HasColumnType("text");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("WalletId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("WalletId");
-
-                    b.ToTable("PayoutRequests");
-                });
-
             modelBuilder.Entity("MarketPlace.Api.Domain.Entities.Product", b =>
                 {
                     b.Property<Guid>("Id")
@@ -765,89 +722,6 @@ namespace MarketPlace.Api.Migrations
                     b.ToTable("Vendors", (string)null);
                 });
 
-            modelBuilder.Entity("MarketPlace.Api.Domain.Entities.Wallet", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<long>("AvailableBalanceInKobo")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<long>("PendingBalanceInKobo")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("VendorId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("VendorId");
-
-                    b.ToTable("Wallets");
-                });
-
-            modelBuilder.Entity("MarketPlace.Api.Domain.Entities.WalletTransaction", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<long>("AmountInKobo")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Reference")
-                        .HasColumnType("text");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
-
-                    b.Property<Guid>("WalletId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("WalletId");
-
-                    b.ToTable("WalletTransactions");
-                });
-
-            modelBuilder.Entity("MarketPlace.Api.Domain.Entities.WishlistItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("ProductId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ProductId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("WishlistItems");
-                });
-
             modelBuilder.Entity("RoleUser", b =>
                 {
                     b.Property<Guid>("RolesId")
@@ -1014,17 +888,6 @@ namespace MarketPlace.Api.Migrations
                     b.Navigation("Vendor");
                 });
 
-            modelBuilder.Entity("MarketPlace.Api.Domain.Entities.PayoutRequest", b =>
-                {
-                    b.HasOne("MarketPlace.Api.Domain.Entities.Wallet", "Wallet")
-                        .WithMany("Payouts")
-                        .HasForeignKey("WalletId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Wallet");
-                });
-
             modelBuilder.Entity("MarketPlace.Api.Domain.Entities.Product", b =>
                 {
                     b.HasOne("MarketPlace.Api.Domain.Entities.Category", "Category")
@@ -1129,47 +992,6 @@ namespace MarketPlace.Api.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("MarketPlace.Api.Domain.Entities.Wallet", b =>
-                {
-                    b.HasOne("MarketPlace.Api.Domain.Entities.Vendor", "Vendor")
-                        .WithMany()
-                        .HasForeignKey("VendorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Vendor");
-                });
-
-            modelBuilder.Entity("MarketPlace.Api.Domain.Entities.WalletTransaction", b =>
-                {
-                    b.HasOne("MarketPlace.Api.Domain.Entities.Wallet", "Wallet")
-                        .WithMany("Transactions")
-                        .HasForeignKey("WalletId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Wallet");
-                });
-
-            modelBuilder.Entity("MarketPlace.Api.Domain.Entities.WishlistItem", b =>
-                {
-                    b.HasOne("MarketPlace.Api.Domain.Entities.Product", "Product")
-                        .WithMany()
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MarketPlace.Api.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("RoleUser", b =>
                 {
                     b.HasOne("MarketPlace.Api.Domain.Entities.Role", null)
@@ -1226,13 +1048,6 @@ namespace MarketPlace.Api.Migrations
             modelBuilder.Entity("MarketPlace.Api.Domain.Entities.Vendor", b =>
                 {
                     b.Navigation("Products");
-                });
-
-            modelBuilder.Entity("MarketPlace.Api.Domain.Entities.Wallet", b =>
-                {
-                    b.Navigation("Payouts");
-
-                    b.Navigation("Transactions");
                 });
 #pragma warning restore 612, 618
         }
