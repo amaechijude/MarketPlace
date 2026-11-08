@@ -1,4 +1,5 @@
 ﻿using System.Net.Http.Json;
+using MarketPlace.Api.Features.Auth;
 using MarketPlace.Api.Features.Auth.Login;
 using MarketPlace.Api.Features.Auth.Register;
 using MarketPlace.Test.IntegrationTest.SetUp;
@@ -52,12 +53,15 @@ public sealed class UserRegistrationTests(CustomWebApplicationFactory factory)
         );
 
         var response = await httpClient.PostAsJsonAsync(registerUrl, request);
-        var registration = await response.Content.ReadFromJsonAsync<RegisterUserResponse>();
+        var registration = await response.Content.ReadFromJsonAsync<HasOtpResponse>();
 
         Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
         Assert.NotNull(registration);
-        Assert.NotEqual(Guid.Empty, registration.OtpId);
-        Assert.Equal("Registration Successful. Check email for otp", registration.Message);
+        Assert.NotEqual(string.Empty, registration.Message);
+        Assert.Equal(
+            "If the details are valid, a verification code has been sent to your email.",
+            registration.Message
+        );
     }
 
     [Fact]
@@ -68,12 +72,11 @@ public sealed class UserRegistrationTests(CustomWebApplicationFactory factory)
 
         var firstResponse = await httpClient.PostAsJsonAsync(registerUrl, request);
         var secondResponse = await httpClient.PostAsJsonAsync(registerUrl, request);
-        var registration = await secondResponse.Content.ReadFromJsonAsync<RegisterUserResponse>();
+        var registration = await secondResponse.Content.ReadFromJsonAsync<HasOtpResponse>();
 
         Assert.Equal(System.Net.HttpStatusCode.OK, firstResponse.StatusCode);
         Assert.Equal(System.Net.HttpStatusCode.OK, secondResponse.StatusCode);
         Assert.NotNull(registration);
-        Assert.Equal(Guid.Empty, registration.OtpId);
         Assert.Equal("Login", registration.Message);
     }
 
@@ -83,12 +86,12 @@ public sealed class UserRegistrationTests(CustomWebApplicationFactory factory)
         RegisterUserRequest request = new($"verify-{Guid.NewGuid():N}@example.com", "Password@123");
 
         var registerResponse = await httpClient.PostAsJsonAsync(registerUrl, request);
-        var registration = await registerResponse.Content.ReadFromJsonAsync<RegisterUserResponse>();
+        var registration = await registerResponse.Content.ReadFromJsonAsync<HasOtpResponse>();
         Assert.NotNull(registration);
 
         var verifyResponse = await httpClient.PostAsJsonAsync(
             registerUrl,
-            new RegisterUserVerifyOtpRequest(registration.OtpId, "000000")
+            new VerifyOtpApiRequest(request.Email, "000000")
         );
 
         Assert.Equal(System.Net.HttpStatusCode.BadRequest, verifyResponse.StatusCode);

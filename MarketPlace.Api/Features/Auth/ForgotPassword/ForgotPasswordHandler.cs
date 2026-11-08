@@ -2,17 +2,15 @@ using MarketPlace.Api.Common.ApiResponseFactory;
 using MarketPlace.Api.Common.Extensions;
 using MarketPlace.Api.Common.Normalizer;
 using MarketPlace.Api.Domain.DatabaseContext;
-using MarketPlace.Api.Infrastucture.OtpValidation;
+using MarketPlace.Api.Infrastucture.OtpService;
 using Microsoft.EntityFrameworkCore;
 
 namespace MarketPlace.Api.Features.Auth.ForgotPassword;
 
-public sealed class ForgotPasswordHandler(
-    AppDbContext context,
-    VerificationCodeManager verificationCodeManager
-) : IScopedRequestHandler
+public sealed class ForgotPasswordHandler(AppDbContext context, OtpEmailHandler otpservice)
+    : IScopedRequestHandler
 {
-    public async Task<ApiResponse<ForgotPasswordResponse>> HandleAsync(
+    public async Task<ApiResponse<HasOtpResponse>> HandleAsync(
         ForgotPasswordRequest request,
         CancellationToken cancellationToken
     )
@@ -24,15 +22,15 @@ public sealed class ForgotPasswordHandler(
             .FirstOrDefaultAsync(cancellationToken);
 
         if (user is null)
-            return ApiResponse<ForgotPasswordResponse>.NotFound("User not found");
+            return ApiResponse<HasOtpResponse>.NotFound("User not found");
 
-        var otpId = await verificationCodeManager.GenerateAndDispatchOtp(
+        await otpservice.GenerateAndEnqueueAsync(
             user.Id,
             email,
             OtpType.ResetPassword,
             cancellationToken
         );
 
-        return ApiResponse<ForgotPasswordResponse>.Success(new ForgotPasswordResponse(otpId));
+        return ApiResponse<HasOtpResponse>.Success(new HasOtpResponse());
     }
 }

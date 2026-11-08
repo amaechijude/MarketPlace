@@ -3,7 +3,7 @@ using MarketPlace.Api.Common.Extensions;
 using MarketPlace.Api.Common.Normalizer;
 using MarketPlace.Api.Domain.DatabaseContext;
 using MarketPlace.Api.Domain.Entities;
-using MarketPlace.Api.Infrastucture.OtpValidation;
+using MarketPlace.Api.Infrastucture.OtpService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,19 +11,17 @@ namespace MarketPlace.Api.Features.Auth.Register;
 
 public sealed class RegisterUserHandler(
     AppDbContext context,
-    VerificationCodeManager verificationCodeManager,
+    OtpEmailHandler otpEmailService,
     TimeProvider timeProvider,
     IPasswordHasher<User> hasher
 ) : IScopedRequestHandler
 {
-    public async Task<ApiResponse<RegisterUserResponse>> HandleAsync(
+    public async Task<ApiResponse<HasOtpResponse>> HandleAsync(
         RegisterUserRequest request,
         CancellationToken cancellationToken
     )
     {
         var email = EmailNormalizer.Normalize(request.Email);
-
-        var otpId = Guid.Empty;
 
         if (
             await context.Users.AnyAsync(
@@ -31,9 +29,7 @@ public sealed class RegisterUserHandler(
                 cancellationToken: cancellationToken
             )
         )
-            return ApiResponse<RegisterUserResponse>.Success(
-                new RegisterUserResponse(otpId, "Login")
-            );
+            return ApiResponse<HasOtpResponse>.Success(new HasOtpResponse("Login"));
 
         var user = User.Create(email, timeProvider.GetUtcNow());
         user.AddPasswordHash(hasher.HashPassword(user, request.Password));
@@ -45,24 +41,16 @@ public sealed class RegisterUserHandler(
         }
         catch (DbUpdateException)
         {
-            return ApiResponse<RegisterUserResponse>.Success(
-                new RegisterUserResponse(otpId, "Login")
-            );
+            return ApiResponse<HasOtpResponse>.Success(new HasOtpResponse("Login"));
         }
 
-        otpId = await DispatchOtpAsync(user.Id, email, cancellationToken);
-        return ApiResponse<RegisterUserResponse>.Success(new RegisterUserResponse(otpId));
-    }
-
-    private async Task<Guid> DispatchOtpAsync(
-        Guid userId,
-        string email,
-        CancellationToken cancellationToken
-    ) =>
-        await verificationCodeManager.GenerateAndDispatchOtp(
-            userId,
+        await otpEmailService.GenerateAndEnqueueAsync(
+            user.Id,
             email,
             OtpType.Register,
             cancellationToken
         );
+
+        return ApiResponse<HasOtpResponse>.Success(new HasOtpResponse());
+    }
 }

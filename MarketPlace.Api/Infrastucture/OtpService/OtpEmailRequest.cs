@@ -1,4 +1,4 @@
-namespace MarketPlace.Api.Infrastucture.OtpValidation;
+namespace MarketPlace.Api.Infrastucture.OtpService;
 
 public sealed record OtpEmailRequest(string UserEmail, OtpType OType, string PlainOtp)
 {

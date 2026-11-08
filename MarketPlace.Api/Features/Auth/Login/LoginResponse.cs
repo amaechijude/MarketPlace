@@ -5,8 +5,9 @@ namespace MarketPlace.Api.Features.Auth.Login;
 public sealed record LoginResponse
 {
     public bool IsSuccess { get; private init; }
+    public bool IsOtpRequired { get; private init; }
     public string AccesToken { get; private init; } = string.Empty;
-    public DateTimeOffset ExpiresOn { get; private init; }
+    public DateTimeOffset ExpiresOn { get; private init; } = DateTimeOffset.MinValue;
     private string Error { get; init; } = string.Empty;
     public ProblemDetails Problem => new() { Detail = Error, Status = 400 };
 
@@ -20,4 +21,12 @@ public sealed record LoginResponse
 
     public static LoginResponse Fail(string error = "Invalid or Expired Otp") =>
         new() { IsSuccess = false, Error = error };
+
+    public static LoginResponse Success() => new();
+
+    private LoginResponse()
+    {
+        IsOtpRequired = true;
+        IsSuccess = true;
+    }
 }

@@ -10,11 +10,6 @@ public sealed record RegisterUserRequest(
     [Required, IsValidPassword] string Password
 );
 
-public sealed record RegisterUserResponse(
-    Guid OtpId,
-    string Message = "Registration Successful. Check email for otp"
-);
-
 public sealed class RegisterUserRequestValidator : AbstractValidator<RegisterUserRequest>
 {
     public RegisterUserRequestValidator()

@@ -21,7 +21,7 @@ public static class ForgotPasswordEndpoint
                 ) => (await handler.HandleAsync(request, ct)).ToMinimalApiResult()
             )
             .WithValidation<ForgotPasswordRequest>()
-            .Produces<ForgotPasswordResponse>();
+            .Produces<HasOtpResponse>();
 
         group
             .MapPost(

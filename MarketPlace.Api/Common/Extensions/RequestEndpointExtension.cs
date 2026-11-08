@@ -49,10 +49,26 @@ public static class RequestEndpointExtension
 
     public static void MapOpenApiDocumentation(this WebApplication app)
     {
-        app.MapOpenApi();
-        app.MapScalarApiReference();
-        app.MapGet("/", () => Results.Redirect("/scalar"))
-            .ExcludeFromApiReference()
-            .ExcludeFromDescription();
+        if (app.Environment.IsDevelopment())
+        {
+            app.MapOpenApi();
+            app.MapScalarApiReference();
+            app.MapGet("/", () => Results.Redirect("/scalar"))
+                .ExcludeFromApiReference()
+                .ExcludeFromDescription();
+
+            app.MapGet(
+                "/ip",
+                (HttpContext context) =>
+                    Results.Ok(
+                        new
+                        {
+                            IpAddress = context.Connection.RemoteIpAddress?.ToString(),
+                            Scheme = context.Request.Scheme,
+                            Host = context.Request.Host,
+                        }
+                    )
+            );
+        }
     }
 }

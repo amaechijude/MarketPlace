@@ -27,7 +27,7 @@ public sealed class VendorEndpoints : IRequestEndpoints
                     CancellationToken cancellationToken
                 ) => (await handler.HandleAsync(request, cancellationToken)).ToMinimalApiResult()
             )
-            .ProducesResponseWithProblem<CursorPagedResponse<VendorProfileResponse, Guid?>>(400);
+            .WithResponse<CursorPagedResponse<VendorProfileResponse, Guid?>>([400]);
 
         group
             .MapGet(
@@ -38,7 +38,7 @@ public sealed class VendorEndpoints : IRequestEndpoints
                     CancellationToken cancellationToken
                 ) => (await handler.HandleAsync(vendorId, cancellationToken)).ToMinimalApiResult()
             )
-            .ProducesResponseWithProblem<VendorProfileResponse>(404);
+            .WithResponse<VendorProfileResponse>([404]);
 
         group
             .MapGet(
@@ -49,7 +49,7 @@ public sealed class VendorEndpoints : IRequestEndpoints
                     CancellationToken cancellationToken
                 ) => (await handler.HandleAsync(storeSlug, cancellationToken)).ToMinimalApiResult()
             )
-            .ProducesResponseWithProblem<VendorProfileResponse>(404);
+            .WithResponse<VendorProfileResponse>([404]);
 
         // Protected endpoints
         var protectedGroup = group.MapGroup("").RequireAuthorization();

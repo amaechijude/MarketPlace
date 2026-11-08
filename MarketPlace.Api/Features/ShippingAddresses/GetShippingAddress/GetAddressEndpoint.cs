@@ -21,6 +21,6 @@ public static class GetAddressEndpoint
                 ) => (await handler.HandleAsync(user.UserId, addressId, ct)).ToMinimalApiResult()
             )
             .RequireAuthorization()
-            .ProducesResponseWithProblem<AddressResponse>(401, 404);
+            .WithResponse<AddressResponse>([401, 404]);
     }
 }

@@ -20,13 +20,13 @@ public static class RegisterEndpoint
                 ) => (await handler.HandleAsync(request, ct)).ToMinimalApiResult()
             )
             .WithValidation<RegisterUserRequest>()
-            .Produces<RegisterUserResponse>();
+            .Produces<HasOtpResponse>();
 
         group
             .MapPost(
                 "verify",
                 async (
-                    [FromBody] RegisterUserVerifyOtpRequest request,
+                    [FromBody] VerifyOtpApiRequest request,
                     [FromServices] RegisterUserVerifyOtpHandler handler,
                     IWebHostEnvironment env,
                     HttpResponse httpResponse,
@@ -42,7 +42,7 @@ public static class RegisterEndpoint
                     return Results.NoContent();
                 }
             )
-            .WithValidation<RegisterUserVerifyOtpRequest>()
+            .WithValidation<VerifyOtpApiRequest>()
             .Produces(204);
         ;
     }

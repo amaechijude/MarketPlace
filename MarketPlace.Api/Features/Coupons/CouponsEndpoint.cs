@@ -25,6 +25,6 @@ public sealed class CouponsEndpoint : IRequestEndpoints
                         await handler.HandleAsync(request, user, cancellationToken)
                     ).ToMinimalApiResult()
             )
-            .ProducesResponseWithProblem<ApplyCouponResponse>(400);
+            .WithResponse<ApplyCouponResponse>([400]);
     }
 }

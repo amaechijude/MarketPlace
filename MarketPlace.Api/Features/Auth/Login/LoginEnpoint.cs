@@ -1,4 +1,5 @@
 using MarketPlace.Api.Common.Extensions;
+using MarketPlace.Api.Features.Auth.Register;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MarketPlace.Api.Features.Auth.Login;
@@ -24,28 +25,28 @@ public static class LoginEnpoint
                     if (!response.IsSuccess)
                         return Results.Problem(response.Problem);
 
-                    if (Guid.TryParse(response.AccesToken, out Guid guid))
-                        return Results.Ok(new EmailLoginResponse(guid));
+                    if (response.IsOtpRequired)
+                        return Results.Ok(new HasOtpResponse());
 
                     httpResponse.AttachAccessToken(response.AccesToken, response.ExpiresOn, env);
                     return Results.NoContent();
                 }
             )
-            .WithValidationIpAddressAndEmailAddressRateLimit<EmailLoginRequest>("login")
+            .WithValidationIpAndEmailAddressRateLimit<EmailLoginRequest>("login")
             .Produces(204)
-            .Produces<EmailLoginResponse>(202);
+            .Produces<HasOtpResponse>(200);
 
         group.MapPost(
             "/verify-otp",
             async (
-                [FromBody] EmailLoginVerifyOtpRequest request,
+                [FromBody] VerifyOtpApiRequest request,
                 [FromServices] EmailLoginHandler handler,
                 IWebHostEnvironment env,
                 HttpResponse httpResponse,
                 CancellationToken cancellationToken
             ) =>
             {
-                LoginResponse response = await handler.VerifyOtpAsync(request, cancellationToken);
+                var response = await handler.VerifyOtpAsync(request, cancellationToken);
                 if (!response.IsSuccess)
                     return Results.Problem(response.Problem);
 

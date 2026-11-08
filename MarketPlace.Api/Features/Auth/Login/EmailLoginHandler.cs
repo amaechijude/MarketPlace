@@ -2,8 +2,9 @@ using MarketPlace.Api.Common.Extensions;
 using MarketPlace.Api.Common.Normalizer;
 using MarketPlace.Api.Domain.DatabaseContext;
 using MarketPlace.Api.Domain.Entities;
+using MarketPlace.Api.Features.Auth.Register;
 using MarketPlace.Api.Infrastucture.AuthInfrastructure;
-using MarketPlace.Api.Infrastucture.OtpValidation;
+using MarketPlace.Api.Infrastucture.OtpService;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,7 +14,7 @@ public sealed class EmailLoginHandler(
     IAuthSessionStore authSessionstore,
     AppDbContext context,
     IPasswordHasher<User> hasher,
-    VerificationCodeManager verificationCodeManager
+    OtpEmailHandler otpEmailService
 ) : IScopedRequestHandler
 {
     public async Task<LoginResponse> HandleAsync(
@@ -45,35 +46,39 @@ public sealed class EmailLoginHandler(
 
             return LoginResponse.Success(token, expiresOn);
         }
-        var otpId = await verificationCodeManager.GenerateAndDispatchOtp(
+        await otpEmailService.GenerateAndEnqueueAsync(
             user.Id,
-            email,
+            user.Email,
             OtpType.Login,
             cancellationToken
         );
 
-        return LoginResponse.Success(otpId.ToString(), DateTimeOffset.MinValue);
+        return LoginResponse.Success();
     }
 
     public async Task<LoginResponse> VerifyOtpAsync(
-        EmailLoginVerifyOtpRequest request,
+        VerifyOtpApiRequest request,
         CancellationToken cancellationToken
     )
     {
-        var result = await verificationCodeManager.ValidateOtp(
+        var email = EmailNormalizer.Normalize(request.Email);
+
+        var user = await context.Users.FirstOrDefaultAsync(
+            u => u.NormalizedEmail == email,
+            cancellationToken: cancellationToken
+        );
+
+        if (user is null)
+            return LoginResponse.Fail();
+        var isValid = await otpEmailService.ValidateOtpAsync(
             request.OtpInput,
-            request.OtpId,
             OtpType.Login,
+            user.Id,
             cancellationToken
         );
 
-        if (!result.IsValid || result.UserId.IsEmpty)
+        if (!isValid)
             return LoginResponse.Fail();
-
-        var user = await context.Users.FindAsync(
-            [result.UserId],
-            cancellationToken: cancellationToken
-        );
 
         switch (user)
         {

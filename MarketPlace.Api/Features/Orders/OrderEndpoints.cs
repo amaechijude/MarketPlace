@@ -32,7 +32,7 @@ public sealed class OrderEndpoints : IRequestEndpoints
                         )
                     ).ToMinimalApiResult()
             )
-            .ProducesResponseWithProblem<CursorPagedResponse<OrderResponse, Guid?>>(400);
+            .WithResponse<CursorPagedResponse<OrderResponse, Guid?>>([400]);
 
         var adminGroup = group.MapGroup("").RequireAuthorization();
 

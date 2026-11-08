@@ -11,11 +11,10 @@ using MarketPlace.Api.Infrastucture.Cache;
 using MarketPlace.Api.Infrastucture.Database;
 using MarketPlace.Api.Infrastucture.Email;
 using MarketPlace.Api.Infrastucture.MediaStorage;
-using MarketPlace.Api.Infrastucture.OtpValidation;
+using MarketPlace.Api.Infrastucture.OtpService;
 using MarketPlace.Api.Infrastucture.PaymentHandlers;
 using MarketPlace.Api.Infrastucture.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
-using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -76,16 +75,15 @@ builder
     .AddRateLimitingInfrastructure(builder.Configuration) // ratelimit
     .AddMediaStorageInfrastructure(builder.Configuration) // r2
     .AddPaymentHandlersInfrastructure(builder.Configuration)
-    .AddOtpInfrastructure()
-    .AddEmailInfrastructure(builder.Configuration, builder.Environment);
-
-//hosted service
+    .AddEmailInfrastructure(builder.Configuration, builder.Environment)
+    .AddOtpInfrastructure(builder.Configuration);
 
 // forwadedheaders
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.ForwardedHeaders = ForwardedHeaders.All
 );
 
+//hosted and background service
 builder.Services.AddHostedService<StartupCheck>();
 
 var app = builder.Build();

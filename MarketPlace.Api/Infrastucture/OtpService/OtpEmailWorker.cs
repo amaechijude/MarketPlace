@@ -1,26 +1,27 @@
-using System.Threading.Channels;
+using Amazon.S3.Model;
 using MarketPlace.Api.Infrastucture.Email;
 
-namespace MarketPlace.Api.Infrastucture.OtpValidation;
+namespace MarketPlace.Api.Infrastucture.OtpService;
 
-public sealed class VerificationCodeBackgroundDispatcher(
-    ILogger<VerificationCodeBackgroundDispatcher> logger,
-    Channel<OtpEmailRequest> emaiChannel,
+public sealed class OtpEmailWorker(
+    OtpEmailQueue queue,
+    ILogger<OtpEmailWorker> logger,
     IServiceProvider serviceProvider
 ) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await foreach (var email in emaiChannel.Reader.ReadAllAsync(stoppingToken))
+        await foreach (var email in queue.ReadAllAsync(stoppingToken))
         {
             try
             {
-                await DispatchAsync(email, stoppingToken);
+                logger.LogError("Code {code}", email.PlainOtp);
+                _ = await DispatchAsync(email, stoppingToken);
+                // throw new Exception(e)
             }
             catch (Exception e)
             {
                 logger.LogError(
-                    e,
                     "Exception occurred while sending mail to {mail}. on {error}",
                     email.UserEmail,
                     e.Message
@@ -29,12 +30,15 @@ public sealed class VerificationCodeBackgroundDispatcher(
         }
     }
 
-    private async Task DispatchAsync(OtpEmailRequest request, CancellationToken cancellationToken)
+    private async Task<bool> DispatchAsync(
+        OtpEmailRequest request,
+        CancellationToken cancellationToken
+    )
     {
         await using var scope = serviceProvider.CreateAsyncScope();
         var emailSender = scope.ServiceProvider.GetRequiredService<EmailSender>();
 
-        await emailSender.SendEmailAsync(
+        return await emailSender.SendEmailAsync(
             new EmailMetaData(request.UserEmail, request.Subject, request.HtmlBody),
             cancellationToken
         );

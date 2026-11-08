@@ -1,16 +1,18 @@
 using MarketPlace.Api.Common.Extensions;
+using MarketPlace.Api.Common.Normalizer;
 using MarketPlace.Api.Domain.DatabaseContext;
 using MarketPlace.Api.Domain.Entities;
 using MarketPlace.Api.Features.Auth.Login;
 using MarketPlace.Api.Infrastucture.AuthInfrastructure;
-using MarketPlace.Api.Infrastucture.OtpValidation;
+using MarketPlace.Api.Infrastucture.OtpService;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace MarketPlace.Api.Features.Auth.ForgotPassword;
 
 public sealed class ResetPasswordHandler(
     AppDbContext context,
-    VerificationCodeManager verificationCodeManager,
+    OtpEmailHandler otpEmailService,
     IAuthSessionStore authSessionstore,
     IPasswordHasher<User> hasher
 ) : IScopedRequestHandler
@@ -20,22 +22,23 @@ public sealed class ResetPasswordHandler(
         CancellationToken cancellationToken
     )
     {
-        var result = await verificationCodeManager.ValidateOtp(
-            request.OtpInput,
-            request.OtpId,
-            OtpType.ResetPassword,
-            cancellationToken
-        );
-
-        if (!result.IsValid || result.UserId.IsEmpty)
-            return LoginResponse.Fail();
-
-        var user = await context.Users.FindAsync(
-            [result.UserId],
+        var email = EmailNormalizer.Normalize(request.Email);
+        var user = await context.Users.FirstOrDefaultAsync(
+            u => u.NormalizedEmail == email,
             cancellationToken: cancellationToken
         );
 
         if (user is null)
+            return LoginResponse.Fail();
+
+        var isValid = await otpEmailService.ValidateOtpAsync(
+            request.OtpInput,
+            OtpType.ResetPassword,
+            user.Id,
+            cancellationToken
+        );
+
+        if (!isValid)
             return LoginResponse.Fail();
 
         var hash = hasher.HashPassword(user, request.Password);

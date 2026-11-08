@@ -32,7 +32,7 @@ public sealed class ReviewEndpoints : IRequestEndpoints
                         )
                     ).ToMinimalApiResult()
             )
-            .ProducesResponseWithProblem<CursorPagedResponse<ReviewResponse, Guid?>>(400);
+            .WithResponse<CursorPagedResponse<ReviewResponse, Guid?>>([400]);
 
         var protectedGroup = group.RequireAuthorization();
 
