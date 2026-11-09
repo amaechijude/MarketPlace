@@ -23,14 +23,6 @@ public sealed class RegisterUserHandler(
     {
         var email = EmailNormalizer.Normalize(request.Email);
 
-        if (
-            await context.Users.AnyAsync(
-                u => u.NormalizedEmail == email,
-                cancellationToken: cancellationToken
-            )
-        )
-            return ApiResponse<HasOtpResponse>.Success(new HasOtpResponse("Login"));
-
         var user = User.Create(email, timeProvider.GetUtcNow());
         user.AddPasswordHash(hasher.HashPassword(user, request.Password));
 

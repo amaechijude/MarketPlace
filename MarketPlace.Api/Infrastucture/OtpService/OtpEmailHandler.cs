@@ -34,7 +34,7 @@ public sealed class OtpEmailHandler(
     );
 
     private readonly IDatabase _redis = mux.GetDatabase();
-    private readonly byte[] _pepper = Convert.FromBase64String(options.Value.Secret);
+    private readonly byte[] _pepper = Encoding.UTF8.GetBytes(options.Value.Secret);
 
     public async Task GenerateAndEnqueueAsync(
         Guid userId,

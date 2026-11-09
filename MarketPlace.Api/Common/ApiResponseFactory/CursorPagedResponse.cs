@@ -1,5 +1,3 @@
-using JetBrains.Annotations;
-
 namespace MarketPlace.Api.Common.ApiResponseFactory;
 
 public sealed record CursorPagedResponse<TData, TCursor>(

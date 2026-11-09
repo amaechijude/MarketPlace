@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 using MarketPlace.Api.Common.Normalizer;
 using MarketPlace.Api.Features.Auth.Login;
+using MarketPlace.Api.Features.Auth.Register;
 using MarketPlace.Api.Infrastucture.RateLimiting;
 using MarketPlace.Api.Infrastucture.RateLimiting.Redis;
 
@@ -31,6 +32,9 @@ public static class RouteHandlerBuilderExtension
                     return await next(context);
                 }
             );
+
+        public RouteHandlerBuilder WithValidationAndIpsRateLimeter<T>(string prefix) =>
+            builder.WithValidation<T>().WithIpAddressRateLimiter(prefix);
 
         public RouteHandlerBuilder WithValidation<TRequest>() =>
             builder
@@ -122,30 +126,41 @@ public static class RouteHandlerBuilderExtension
                         return Results.Problem(statusCode: StatusCodes.Status429TooManyRequests);
                     }
 
+                    var email = string.Empty;
+
                     if (
-                        body is EmailLoginRequest emailLoginRequest
+                        body is EmailLoginRequest eq
                         && context
                             .HttpContext.Request.Path.ToString()
                             .Contains("login", StringComparison.OrdinalIgnoreCase)
                     )
                     {
-                        // email limiter
-                        limiter =
-                            context.HttpContext.RequestServices.GetRequiredKeyedService<ITokenBucketLimiter>(
-                                EmailAddresTokenBucketOptions.Key
-                            );
-                        result = await limiter.AllowAsync(
-                            $"{prefix}:{EmailNormalizer.Normalize(emailLoginRequest.Email)}",
-                            context.HttpContext.RequestAborted
-                        );
-                        if (!result.Allowed)
-                        {
-                            context.HttpContext.Response.AttachRetryAfterHeader(result.RetryAfter);
-                            return Results.Problem(
-                                statusCode: StatusCodes.Status429TooManyRequests
-                            );
-                        }
+                        email = eq.Email;
                     }
+                    else if (
+                        body is RegisterUserRequest rq
+                        && context
+                            .HttpContext.Request.Path.ToString()
+                            .Contains("register", StringComparison.OrdinalIgnoreCase)
+                    )
+                    {
+                        email = rq.Email;
+                    }
+                    // email limiter
+                    limiter =
+                        context.HttpContext.RequestServices.GetRequiredKeyedService<ITokenBucketLimiter>(
+                            EmailAddresTokenBucketOptions.Key
+                        );
+                    result = await limiter.AllowAsync(
+                        $"{prefix}:{EmailNormalizer.Normalize(email)}",
+                        context.HttpContext.RequestAborted
+                    );
+                    if (!result.Allowed)
+                    {
+                        context.HttpContext.Response.AttachRetryAfterHeader(result.RetryAfter);
+                        return Results.Problem(statusCode: StatusCodes.Status429TooManyRequests);
+                    }
+
                     return await next(context);
                 }
             );

@@ -1,8 +1,6 @@
 using System.Net.Mail;
-using System.Threading.Channels;
 using FluentEmail.Core.Interfaces;
 using FluentEmail.Smtp;
-using MarketPlace.Api.Infrastucture.OtpService;
 using Microsoft.Extensions.Options;
 
 namespace MarketPlace.Api.Infrastucture.Email;

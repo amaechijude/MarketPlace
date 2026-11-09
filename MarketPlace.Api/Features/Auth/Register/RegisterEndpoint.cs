@@ -19,7 +19,7 @@ public static class RegisterEndpoint
                     CancellationToken ct
                 ) => (await handler.HandleAsync(request, ct)).ToMinimalApiResult()
             )
-            .WithValidation<RegisterUserRequest>()
+            .WithValidationIpAndEmailAddressRateLimit<RegisterUserRequest>("register")
             .Produces<HasOtpResponse>();
 
         group
@@ -42,7 +42,7 @@ public static class RegisterEndpoint
                     return Results.NoContent();
                 }
             )
-            .WithValidation<VerifyOtpApiRequest>()
+            .WithValidationAndIpsRateLimeter<VerifyOtpApiRequest>("rv")
             .Produces(204);
         ;
     }

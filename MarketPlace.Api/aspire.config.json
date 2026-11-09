@@ -1,0 +1,5 @@
+{
+    "appHost": {
+        "path": "../MarketPlace.AppHost/MarketPlace.AppHost.csproj"
+    }
+}

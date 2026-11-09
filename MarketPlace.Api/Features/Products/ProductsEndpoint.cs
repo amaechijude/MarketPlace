@@ -3,7 +3,6 @@ using MarketPlace.Api.Features.Products.CreateProduct;
 using MarketPlace.Api.Features.Products.DeleteProduct;
 using MarketPlace.Api.Features.Products.GetProduct;
 using MarketPlace.Api.Features.Products.ListProduct;
-using MarketPlace.Api.Features.Products.SearchProduct;
 using MarketPlace.Api.Features.Products.UpdateProduct;
 
 namespace MarketPlace.Api.Features.Products;

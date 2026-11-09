@@ -64,8 +64,8 @@ public static class RequestEndpointExtension
                         new
                         {
                             IpAddress = context.Connection.RemoteIpAddress?.ToString(),
-                            Scheme = context.Request.Scheme,
-                            Host = context.Request.Host,
+                            context.Request.Scheme,
+                            context.Request.Host,
                         }
                     )
             );
