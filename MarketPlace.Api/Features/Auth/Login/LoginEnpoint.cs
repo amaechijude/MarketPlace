@@ -1,5 +1,4 @@
 using MarketPlace.Api.Common.Extensions;
-using MarketPlace.Api.Features.Auth.Register;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MarketPlace.Api.Features.Auth.Login;

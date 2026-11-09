@@ -13,3 +13,8 @@ public static class ApiResponseExtension
         return Results.Ok(result.Data);
     }
 }
+
+public static class ApiResult
+{
+    public static IResult Resolve<T>(ApiResponse<T> api) => api.ToMinimalApiResult();
+}

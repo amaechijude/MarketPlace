@@ -2,7 +2,6 @@ using MarketPlace.Api.Common.Extensions;
 using MarketPlace.Api.Common.Normalizer;
 using MarketPlace.Api.Domain.DatabaseContext;
 using MarketPlace.Api.Domain.Entities;
-using MarketPlace.Api.Features.Auth.Register;
 using MarketPlace.Api.Infrastucture.AuthInfrastructure;
 using MarketPlace.Api.Infrastucture.OtpService;
 using Microsoft.AspNetCore.Identity;
