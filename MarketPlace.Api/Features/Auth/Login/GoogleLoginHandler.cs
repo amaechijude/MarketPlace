@@ -22,7 +22,7 @@ public sealed class GoogleLoginHandler(
         CancellationToken cancellationToken
     )
     {
-        var payload = await ValidateGoogleJwtAsync(request.Jwt, googleOptions.Value.ClientId);
+        var payload = await ValidateGoogleJwtAsync(request.Jwt);
         if (payload is null)
             return LoginResponse.Fail("Invalid or expired session");
 
@@ -32,10 +32,11 @@ public sealed class GoogleLoginHandler(
 
         var user = await ResolveUserAsync(payload, cancellationToken);
 
-        var (token, expiresOn) = await authSessionstore.CreateAsync(
+        var (token, expiresOn, _) = await authSessionstore.CreateAsync(
             user.Id,
-            user.Roles.Select(r => r.Name),
-            cancellationToken
+            [.. user.Roles.Select(r => r.Name)],
+            cancellationToken,
+            request.RememberMe
         );
 
         return LoginResponse.Success(token, expiresOn);
@@ -73,16 +74,13 @@ public sealed class GoogleLoginHandler(
         return user;
     }
 
-    private async Task<GoogleJsonWebSignature.Payload?> ValidateGoogleJwtAsync(
-        string jwt,
-        string clientId
-    )
+    private async Task<GoogleJsonWebSignature.Payload?> ValidateGoogleJwtAsync(string jwt)
     {
         try
         {
             var settings = new GoogleJsonWebSignature.ValidationSettings
             {
-                Audience = [clientId],
+                Audience = [_clientId],
                 IssuedAtClockTolerance = TimeSpan.FromSeconds(60),
             };
             return await GoogleJsonWebSignature.ValidateAsync(jwt, settings);
@@ -93,4 +91,6 @@ public sealed class GoogleLoginHandler(
             return null;
         }
     }
+
+    private readonly string _clientId = googleOptions.Value.ClientId;
 }

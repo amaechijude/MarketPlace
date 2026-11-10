@@ -5,5 +5,6 @@ namespace MarketPlace.Api.Features.Auth.Login;
 
 public sealed record EmailLoginRequest(
     [Required, NoInBetweenWhiteSpace, EmailAddress] string Email,
-    [Required, IsValidPassword] string Password
+    [Required, IsValidPassword] string Password,
+    bool RememberMe = false
 );

@@ -38,7 +38,12 @@ public sealed class RegisterUserVerifyOtpHandler(
         if (user.EmailConfrimed)
         {
             // login
-            var (tok, expires) = await authSessionstore.CreateAsync(user.Id, [], cancellationToken);
+            var (tok, expires, _) = await authSessionstore.CreateAsync(
+                user.Id,
+                [],
+                cancellationToken,
+                request.RememberMe
+            );
 
             return LoginResponse.Success(tok, expires);
         }
@@ -60,7 +65,12 @@ public sealed class RegisterUserVerifyOtpHandler(
         }
 
         // login
-        var (token, expiresOn) = await authSessionstore.CreateAsync(user.Id, [], cancellationToken);
+        var (token, expiresOn, _) = await authSessionstore.CreateAsync(
+            user.Id,
+            [],
+            cancellationToken,
+            request.RememberMe
+        );
 
         return LoginResponse.Success(token, expiresOn);
     }

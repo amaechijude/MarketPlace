@@ -37,10 +37,11 @@ public sealed class EmailLoginHandler(
 
         if (user is { EmailConfrimed: true })
         {
-            var (token, expiresOn) = await authSessionstore.CreateAsync(
+            var (token, expiresOn, _) = await authSessionstore.CreateAsync(
                 user.Id,
-                user.Roles.Select(r => r.Name),
-                cancellationToken
+                [.. user.Roles.Select(r => r.Name)],
+                cancellationToken,
+                request.RememberMe
             );
 
             return LoginResponse.Success(token, expiresOn);
@@ -90,7 +91,12 @@ public sealed class EmailLoginHandler(
         }
 
         // login
-        var (token, expiresOn) = await authSessionstore.CreateAsync(user.Id, [], cancellationToken);
+        var (token, expiresOn, _) = await authSessionstore.CreateAsync(
+            user.Id,
+            [],
+            cancellationToken,
+            request.RememberMe
+        );
 
         return LoginResponse.Success(token, expiresOn);
     }

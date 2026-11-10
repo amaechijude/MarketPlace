@@ -23,10 +23,12 @@ public sealed class ResetPasswordHandler(
     )
     {
         var email = EmailNormalizer.Normalize(request.Email);
-        var user = await context.Users.FirstOrDefaultAsync(
-            u => u.NormalizedEmail == email,
-            cancellationToken: cancellationToken
-        );
+        var user = await context
+            .Users.Include(user => user.Roles)
+            .FirstOrDefaultAsync(
+                u => u.NormalizedEmail == email,
+                cancellationToken: cancellationToken
+            );
 
         if (user is null)
             return LoginResponse.Fail();
@@ -45,10 +47,12 @@ public sealed class ResetPasswordHandler(
         user.AddPasswordHash(hash);
         await context.SaveChangesAsync(cancellationToken);
 
+        await authSessionstore.DeleteAllUserSessionsAsync(user.Id, cancellationToken);
+
         // login
-        var (token, expiresOn) = await authSessionstore.CreateAsync(
+        var (token, expiresOn, _) = await authSessionstore.CreateAsync(
             user.Id,
-            user.Roles.Select(r => r.Name),
+            [.. user.Roles.Select(r => r.Name)],
             cancellationToken
         );
 
