@@ -491,3 +491,4 @@ patch_order.sh
 patch_product_vector.sh
 patch_vendor.sh
 sync_namespace.py
+MarketPlace.AppHost/aspire-output/**

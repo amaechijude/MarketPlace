@@ -19,7 +19,7 @@ public sealed record OrderResponse(
     string TrackingNumber,
     string PaymentReference,
     DateTimeOffset CreatedAt,
-    IEnumerable<OrderItemResponse> Items
+    List<OrderItemResponse> Items
 );
 
 public sealed record UpdateOrderStatusRequest(OrderStatus Status, string? TrackingNumber);

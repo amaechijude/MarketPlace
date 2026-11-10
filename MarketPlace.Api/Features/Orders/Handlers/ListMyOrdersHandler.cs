@@ -10,12 +10,12 @@ public sealed class ListMyOrdersHandler(AppDbContext context) : IScopedRequestHa
 {
     public async Task<ApiResponse<CursorPagedResponse<OrderResponse, Guid?>>> HandleAsync(
         Guid userId,
-        Guid? cursor,
-        int pageSize,
+        GetOrdersRequest request,
         CancellationToken cancellationToken
     )
     {
-        pageSize = Math.Clamp(pageSize, 10, 50);
+        var pageSize = Math.Clamp(request.PageSize, 1, 10);
+        var cursor = request.Cursor;
 
         var query = context
             .Orders.AsNoTracking()
@@ -40,12 +40,13 @@ public sealed class ListMyOrdersHandler(AppDbContext context) : IScopedRequestHa
                 o.PaymentReference,
                 o.CreatedAt,
                 o.OrderItems.Select(i => new OrderItemResponse(
-                    i.Id,
-                    i.ProductName,
-                    i.Sku,
-                    i.Quantity,
-                    i.UnitPriceInKobo
-                ))
+                        i.Id,
+                        i.ProductName,
+                        i.Sku,
+                        i.Quantity,
+                        i.UnitPriceInKobo
+                    ))
+                    .ToList()
             ))
             .ToListAsync(cancellationToken);
 

@@ -17,19 +17,13 @@ public sealed class OrderEndpoints : IRequestEndpoints
             .MapGet(
                 "/my-orders",
                 async (
-                    [FromQuery] Guid? cursor,
-                    [FromQuery] int pageSize,
+                    [AsParameters] GetOrdersRequest request,
                     [FromServices] ListMyOrdersHandler handler,
                     ClaimsPrincipal user,
                     CancellationToken cancellationToken
                 ) =>
                     (
-                        await handler.HandleAsync(
-                            user.UserId,
-                            cursor,
-                            pageSize == 0 ? 10 : pageSize,
-                            cancellationToken
-                        )
+                        await handler.HandleAsync(user.UserId, request, cancellationToken)
                     ).ToMinimalApiResult()
             )
             .WithResponse<CursorPagedResponse<OrderResponse, Guid?>>([400]);
@@ -50,3 +44,5 @@ public sealed class OrderEndpoints : IRequestEndpoints
         );
     }
 }
+
+public sealed record GetOrdersRequest(Guid? Cursor, int PageSize = 5);
