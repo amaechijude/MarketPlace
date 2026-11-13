@@ -1,4 +1,4 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.6.0">
+<Project Sdk="Aspire.AppHost.Sdk/13.6.5">
   <ItemGroup>
     <ProjectReference Include="..\MarketPlace.Api\MarketPlace.Api.csproj" />
   </ItemGroup>
@@ -17,6 +17,10 @@
     <PackageReference Include="Aspire.Hosting.RabbitMQ" />
     <PackageReference Include="Aspire.Hosting.Redis" />
     <PackageReference Include="MessagePack" />
+    <PackageReference Include="MessagePack.MSBuild.Tasks">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="System.Security.Cryptography.Pkcs" />
   </ItemGroup>
 </Project>

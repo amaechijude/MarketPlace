@@ -9,7 +9,7 @@ using MarketPlace.Api.Features.Auth.Register;
 using MarketPlace.Api.Infrastucture.AuthInfrastructure;
 using MarketPlace.Api.Infrastucture.Cache;
 using MarketPlace.Api.Infrastucture.Database;
-using MarketPlace.Api.Infrastucture.Email;
+using MarketPlace.Api.Infrastucture.Email.Sendly;
 using MarketPlace.Api.Infrastucture.MediaStorage;
 using MarketPlace.Api.Infrastucture.OtpService;
 using MarketPlace.Api.Infrastucture.PaymentHandlers;
@@ -75,7 +75,7 @@ builder
     .AddRateLimitingInfrastructure(builder.Configuration) // ratelimit
     .AddMediaStorageInfrastructure(builder.Configuration) // r2
     .AddPaymentHandlersInfrastructure(builder.Configuration)
-    .AddEmailInfrastructure(builder.Configuration, builder.Environment)
+    .AddSendlyEmail(builder.Configuration)
     .AddOtpInfrastructure(builder.Configuration);
 
 // forwadedheaders

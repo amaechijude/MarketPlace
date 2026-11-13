@@ -2,25 +2,25 @@ namespace MarketPlace.Api.Infrastucture.OtpService;
 
 public sealed record OtpEmailRequest(string UserEmail, OtpType OType, string PlainOtp)
 {
-    public string Subject =>
+    private (string Subject, string Title) Resolve =>
         OType switch
         {
-            OtpType.Register => "Registration",
-            OtpType.ResetPassword => "Password Reset",
-            OtpType.Login => "Login",
-            _ => "Hello",
+            OtpType.Register => ("Registration", "Verify Your Account"),
+            OtpType.ResetPassword => ("Password Reset", "Reset Your Password"),
+            OtpType.Login => ("Login", "Welcome Back"),
+            _ => ("Hello", "Hello"),
         };
 
-    public string HtmlBody
-    {
-        get =>
-            $$"""
+    public string Subject => Resolve.Subject;
+    public string Title => Resolve.Title;
+    public string HtmlBody =>
+        $$"""
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <meta charset="utf-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Verify Your Account</title>
+                    <title>{{Title}}</title>
                     <style>
                         body {
                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -113,7 +113,7 @@ public sealed record OtpEmailRequest(string UserEmail, OtpType OType, string Pla
                                 <h1>GITGBRAND</h1>
                             </div>
                             <div class="content">
-                                <div class="greeting">Hello {{field}},</div>
+                                <div class="greeting">Hello {{UserEmail[..UserEmail.IndexOf('@')]}},</div>
                                 <div class="instructions">
                                     Thank you for verifying your identity with GitgBrand. Use the verification code (OTP) below to proceed:
                                 </div>
@@ -126,7 +126,9 @@ public sealed record OtpEmailRequest(string UserEmail, OtpType OType, string Pla
                                 </div>
                             </div>
                             <div class="footer">
-                                <p>&copy; {{DateTime.UtcNow.Year}} GitgBrand. All rights reserved.</p>
+                                <p>&copy; {{DateTime.UtcNow.Year}} {{nameof(
+                    MarketPlace
+                )}}. All rights reserved.</p>
                                 <p>This is an automated message, please do not reply directly to this email.</p>
                             </div>
                         </div>
@@ -134,5 +136,4 @@ public sealed record OtpEmailRequest(string UserEmail, OtpType OType, string Pla
                 </body>
                 </html>
                 """;
-    } = UserEmail[..UserEmail.IndexOf('@')];
 }

@@ -1,12 +1,13 @@
 using MarketPlace.Api.Infrastucture.Email;
+using MarketPlace.Api.Infrastucture.Email.Sendly;
 
 namespace MarketPlace.Api.Infrastucture.OtpService;
 
 public sealed class OtpEmailWorker(
     OtpEmailQueue queue,
     ILogger<OtpEmailWorker> logger,
-    IServiceProvider serviceProvider,
-    IHostEnvironment environment
+    IServiceProvider serviceProvider
+// IHostEnvironment environment
 ) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -16,7 +17,7 @@ public sealed class OtpEmailWorker(
             try
             {
                 bool success = false;
-                if (environment.IsProduction())
+                if (!success)
                 {
                     success = await DispatchAsync(email, stoppingToken);
                 }
@@ -24,7 +25,14 @@ public sealed class OtpEmailWorker(
                 {
                     success = LogForDev(email);
                 }
-                ;
+                // log error if failed to send mail, but do not throw exception so that the message can be re-enqueued for retry
+                if (!success)
+                {
+                    logger.LogError(
+                        "Failed to send mail to {mail}. Re-enqueing for retry",
+                        email.UserEmail
+                    );
+                }
             }
             catch (Exception e)
             {
@@ -42,15 +50,14 @@ public sealed class OtpEmailWorker(
         CancellationToken cancellationToken
     )
     {
-        await using (var scope = serviceProvider.CreateAsyncScope())
-        {
-            var emailSender = scope.ServiceProvider.GetRequiredService<EmailSender>();
-
-            return await emailSender.SendEmailAsync(
-                new EmailMetaData(request.UserEmail, request.Subject, request.HtmlBody),
-                cancellationToken
-            );
-        }
+        await using var scope = serviceProvider.CreateAsyncScope();
+        var emailSender = scope.ServiceProvider.GetRequiredService<SendlyEmailSender>();
+        var idempotencyKey = Guid.NewGuid().ToString();
+        return await emailSender.SendAsync(
+            request.ToSendlyEmailRequest("noreply@gitgbrand.com"),
+            idempotencyKey,
+            cancellationToken
+        );
     }
 
     private bool LogForDev(OtpEmailRequest email)
